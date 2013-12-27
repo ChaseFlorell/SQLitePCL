@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>SQLitePCL</id>
+    <version>3.8.2.0</version>
+    <title>Portable Class Library for SQLite</title>
+    <authors>Microsoft Open Technologies</authors>
+    <owners>Microsoft Open Technologies</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Portable Class Library for SQLite</description>
+  </metadata>
+</package>
