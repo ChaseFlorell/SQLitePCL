@@ -104,8 +104,8 @@
   </ItemGroup>
   <ItemGroup>
     <SDKReference Include="MSTestFramework, Version=11.0" />
-    <SDKReference Include="SQLite.WP80, Version=3.8.2">
-      <Name>SQLite for Windows Phone</Name>
+    <SDKReference Include="SQLite.WP80, Version=3.8.3.1">
+      <Name>SQLite for Windows Phone %28SQLite.WP80, Version=3.8.3.1%29</Name>
     </SDKReference>
     <SDKReference Include="TestPlatform, Version=11.0" />
   </ItemGroup>
@@ -139,6 +139,9 @@
       <Project>{E7F6AAE8-D264-49A2-8295-4E3B02B9BF0B}</Project>
       <Name>SQLitePCL</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).$(TargetFrameworkVersion).Overrides.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).CSharp.targets" />
