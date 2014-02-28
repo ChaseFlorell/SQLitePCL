@@ -14,5 +14,7 @@ namespace SQLitePCL
     public interface ISQLiteConnection : IDisposable
     {
         ISQLiteStatement Prepare(string sql);
+
+        string ErrorMessage();
     }
 }

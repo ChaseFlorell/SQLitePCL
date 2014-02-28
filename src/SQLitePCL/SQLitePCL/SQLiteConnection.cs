@@ -111,18 +111,29 @@ namespace SQLitePCL
             }
         }
 
+        public string ErrorMessage()
+        {
+            try
+            {
+                var errmsgPtr = this.sqlite3Provider.Sqlite3Errmsg(this.db);
+
+                return this.platformMarshal.MarshalStringNativeUTF8ToManaged(errmsgPtr);
+            }
+            catch (SQLiteException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new SQLiteException("Unable to retrieve the error message.", ex);
+            }
+        }
+
         public void Dispose()
         {
             this.Dispose(true);
 
             GC.SuppressFinalize(this);
-        }
-
-        internal string ErrorMessage()
-        {
-            var errmsgPtr = this.sqlite3Provider.Sqlite3Errmsg(this.db);
-
-            return this.platformMarshal.MarshalStringNativeUTF8ToManaged(errmsgPtr);
         }
 
         protected virtual void Dispose(bool disposing)
