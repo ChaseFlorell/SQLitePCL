@@ -494,7 +494,6 @@ namespace SQLitePCL.Ext.Net45.Test
                     statement.Step();
                 }
 
-
                 foreach (var record in insertedRecords)
                 {
                     var command = "INSERT INTO TestConstantInsertParameterBoundQueryFilter(id, i, t, r) VALUES(" + record.Item1.ToString(this.invClt) + "," + record.Item2.ToString(this.invClt)
