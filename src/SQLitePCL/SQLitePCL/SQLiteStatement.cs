@@ -134,7 +134,7 @@ namespace SQLitePCL
 
                     try
                     {
-                        invokeResult = this.sqlite3Provider.Sqlite3BindText(this.stm, index, valuePtr, valueLength, (IntPtr)(-1));
+                        invokeResult = this.sqlite3Provider.Sqlite3BindText(this.stm, index, valuePtr, valueLength - 1, (IntPtr)(-1));
                     }
                     finally
                     {
