@@ -13,6 +13,7 @@ namespace NGP.Test.Net45
     using SQLitePCL;
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text;
@@ -21,10 +22,12 @@ namespace NGP.Test.Net45
     public class GeneralUnitTest
     {
         private Random rnd;
+        private CultureInfo invClt;
 
         public GeneralUnitTest()
         {
             this.rnd = new Random(DateTime.Now.Millisecond);
+            this.invClt = CultureInfo.InvariantCulture;
         }
 
         [TestMethod]
@@ -130,7 +133,8 @@ namespace NGP.Test.Net45
 
                 foreach (var record in insertedRecords)
                 {
-                    var command = "INSERT INTO TestQuery(id, i, t, r) VALUES(" + record.Item1 + "," + record.Item2 + ",'" + record.Item3 + "'," + record.Item4 + ");";
+                    var command = "INSERT INTO TestQuery(id, i, t, r) VALUES(" + record.Item1.ToString(this.invClt) + "," + record.Item2.ToString(this.invClt)
+                        + ",'" + record.Item3 + "'," + record.Item4.ToString(this.invClt) + ");";
 
                     using (var statement = connection.Prepare(command))
                     {
@@ -138,16 +142,22 @@ namespace NGP.Test.Net45
                     }
                 }
 
-                using (var statement = connection.Prepare("SELECT id, i, t, r FROM TestQuery ORDER BY id ASC;"))
+                foreach (var record in insertedRecords)
                 {
-                    while (statement.Step() == SQLiteResult.ROW)
-                    {
-                        var id = (long)statement[0];
-                        var i = (long)statement[1];
-                        var t = (string)statement[2];
-                        var r = (double)statement[3];
+                    var command = "SELECT id, i, t, r FROM TestQuery WHERE id = " + record.Item1.ToString(this.invClt) + " AND i = " + record.Item2.ToString(this.invClt)
+                        + " AND t = '" + record.Item3 + "' AND r = " + record.Item4.ToString(this.invClt) + ";";
 
-                        queriedRecords.Add(new Tuple<int, long, string, double>((int)id, i, t, r));
+                    using (var statement = connection.Prepare(command))
+                    {
+                        while (statement.Step() == SQLiteResult.ROW)
+                        {
+                            var id = (long)statement[0];
+                            var i = (long)statement[1];
+                            var t = (string)statement[2];
+                            var r = (double)statement[3];
+
+                            queriedRecords.Add(new Tuple<int, long, string, double>((int)id, i, t, r));
+                        }
                     }
                 }
 
@@ -170,7 +180,7 @@ namespace NGP.Test.Net45
                 Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
                 Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
                 Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
-                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.00000001));
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.0000001));
             }
         }
 
@@ -280,8 +290,265 @@ namespace NGP.Test.Net45
                 Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
                 Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
                 Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
-                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.00000001));
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.0000001));
                 Assert.IsTrue(insertedRecord.Item5.SequenceEqual(queriedRecord.Item5));
+            }
+        }
+
+        [TestMethod]
+        public void TestBindParameterFilter()
+        {
+            var numRecords = this.rnd.Next(1, 11);
+
+            var insertedRecords = new List<Tuple<int, long, string, double, byte[]>>(numRecords);
+            var queriedRecords = new List<Tuple<int, long, string, double, byte[]>>(numRecords);
+
+            for (var i = 0; i < numRecords; i++)
+            {
+                insertedRecords.Add(new Tuple<int, long, string, double, byte[]>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal(), this.GetRandomBlob()));
+            }
+
+            using (var connection = new SQLiteConnection("test.db"))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestBindParameterFilter;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestBindParameterFilter(id INTEGER, i INTEGER, t TEXT, r REAL, b BLOB);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestBindParameterFilter(id, i, t, r, b) VALUES(@id,@i,@t,@r,@b);"))
+                {
+                    foreach (var record in insertedRecords)
+                    {
+                        statement.Bind(1, record.Item1);
+                        statement.Bind("@i", record.Item2);
+                        statement.Bind(3, record.Item3);
+                        statement.Bind("@r", record.Item4);
+                        statement.Bind(5, record.Item5);
+
+                        statement.Step();
+
+                        statement.Reset();
+                        statement.ClearBindings();
+                    }
+                }
+
+                using (var statement = connection.Prepare("SELECT id, i, t, r, b FROM TestBindParameterFilter WHERE id = @id AND i = @i AND t = @t AND r = @r AND b = @b;"))
+                {
+                    foreach (var record in insertedRecords)
+                    {
+                        statement.Bind(1, record.Item1);
+                        statement.Bind("@i", record.Item2);
+                        statement.Bind(3, record.Item3);
+                        statement.Bind("@r", record.Item4);
+                        statement.Bind(5, record.Item5);
+
+                        while (statement.Step() == SQLiteResult.ROW)
+                        {
+                            var id = (long)statement[0];
+                            var i = (long)statement[1];
+                            var t = (string)statement[2];
+                            var r = (double)statement[3];
+                            var b = (byte[])statement[4];
+
+                            queriedRecords.Add(new Tuple<int, long, string, double, byte[]>((int)id, i, t, r, b));
+                        }
+
+                        statement.Reset();
+                        statement.ClearBindings();
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestBindParameterFilter;"))
+                {
+                    statement.Step();
+                }
+            }
+
+            Assert.AreEqual(insertedRecords.Count, queriedRecords.Count);
+
+            insertedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+            queriedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+
+            for (var i = 0; i < insertedRecords.Count; i++)
+            {
+                var insertedRecord = insertedRecords[i];
+                var queriedRecord = queriedRecords[i];
+
+                Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
+                Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
+                Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.0000001));
+                Assert.IsTrue(insertedRecord.Item5.SequenceEqual(queriedRecord.Item5));
+            }
+        }
+
+        [TestMethod]
+        public void TestParameterBoundInsertConstantQueryFilter()
+        {
+            var numRecords = this.rnd.Next(1, 11);
+
+            var insertedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+            var queriedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+
+            for (var i = 0; i < numRecords; i++)
+            {
+                insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
+            }
+
+            using (var connection = new SQLiteConnection("test.db"))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestParameterBoundInsertConstantQueryFilter;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestParameterBoundInsertConstantQueryFilter(id INTEGER, i INTEGER, t TEXT, r REAL);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestParameterBoundInsertConstantQueryFilter(id, i, t, r) VALUES(@id,@i,@t,@r);"))
+                {
+                    foreach (var record in insertedRecords)
+                    {
+                        statement.Bind(1, record.Item1);
+                        statement.Bind("@i", record.Item2);
+                        statement.Bind(3, record.Item3);
+                        statement.Bind("@r", record.Item4);
+
+                        statement.Step();
+
+                        statement.Reset();
+                        statement.ClearBindings();
+                    }
+                }
+
+                foreach (var record in insertedRecords)
+                {
+                    var command = "SELECT id, i, t, r FROM TestParameterBoundInsertConstantQueryFilter WHERE id = " + record.Item1.ToString(this.invClt) + " AND i = " + record.Item2.ToString(this.invClt)
+                        + " AND t = '" + record.Item3 + "';";
+
+                    using (var statement = connection.Prepare(command))
+                    {
+                        while (statement.Step() == SQLiteResult.ROW)
+                        {
+                            var id = (long)statement[0];
+                            var i = (long)statement[1];
+                            var t = (string)statement[2];
+                            var r = (double)statement[3];
+
+                            queriedRecords.Add(new Tuple<int, long, string, double>((int)id, i, t, r));
+                        }
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestParameterBoundInsertConstantQueryFilter;"))
+                {
+                    statement.Step();
+                }
+            }
+
+            Assert.AreEqual(insertedRecords.Count, queriedRecords.Count);
+
+            insertedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+            queriedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+
+            for (var i = 0; i < insertedRecords.Count; i++)
+            {
+                var insertedRecord = insertedRecords[i];
+                var queriedRecord = queriedRecords[i];
+
+                Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
+                Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
+                Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.0000001));
+            }
+        }
+
+        [TestMethod]
+        public void TestConstantInsertParameterBoundQueryFilter()
+        {
+            var numRecords = this.rnd.Next(1, 11);
+
+            var insertedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+            var queriedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+
+            for (var i = 0; i < numRecords; i++)
+            {
+                insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
+            }
+
+            using (var connection = new SQLiteConnection("test.db"))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestConstantInsertParameterBoundQueryFilter;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestConstantInsertParameterBoundQueryFilter(id INTEGER, i INTEGER, t TEXT, r REAL);"))
+                {
+                    statement.Step();
+                }
+
+                foreach (var record in insertedRecords)
+                {
+                    var command = "INSERT INTO TestConstantInsertParameterBoundQueryFilter(id, i, t, r) VALUES(" + record.Item1.ToString(this.invClt) + "," + record.Item2.ToString(this.invClt)
+                        + ",'" + record.Item3 + "'," + record.Item4.ToString(this.invClt) + ");";
+
+                    using (var statement = connection.Prepare(command))
+                    {
+                        statement.Step();
+                    }
+                }
+
+                using (var statement = connection.Prepare("SELECT id, i, t, r FROM TestConstantInsertParameterBoundQueryFilter WHERE id = @id AND i = @i AND t = @t;"))
+                {
+                    foreach (var record in insertedRecords)
+                    {
+                        statement.Bind(1, record.Item1);
+                        statement.Bind("@i", record.Item2);
+                        statement.Bind(3, record.Item3);
+
+                        while (statement.Step() == SQLiteResult.ROW)
+                        {
+                            var id = (long)statement[0];
+                            var i = (long)statement[1];
+                            var t = (string)statement[2];
+                            var r = (double)statement[3];
+
+                            queriedRecords.Add(new Tuple<int, long, string, double>((int)id, i, t, r));
+                        }
+
+                        statement.Reset();
+                        statement.ClearBindings();
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestConstantInsertParameterBoundQueryFilter;"))
+                {
+                    statement.Step();
+                }
+            }
+
+            Assert.AreEqual(insertedRecords.Count, queriedRecords.Count);
+
+            insertedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+            queriedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+
+            for (var i = 0; i < insertedRecords.Count; i++)
+            {
+                var insertedRecord = insertedRecords[i];
+                var queriedRecord = queriedRecords[i];
+
+                Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
+                Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
+                Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.0000001));
             }
         }
 
