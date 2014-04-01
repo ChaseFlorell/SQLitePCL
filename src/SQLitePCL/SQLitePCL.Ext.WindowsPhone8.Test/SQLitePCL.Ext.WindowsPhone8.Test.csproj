@@ -48,6 +48,7 @@
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|ARM' ">
     <DebugSymbols>true</DebugSymbols>
@@ -59,6 +60,7 @@
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|ARM' ">
     <DebugType>pdbonly</DebugType>
@@ -69,6 +71,7 @@
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="App.xaml.cs">
@@ -104,8 +107,8 @@
   </ItemGroup>
   <ItemGroup>
     <SDKReference Include="MSTestFramework, Version=11.0" />
-    <SDKReference Include="SQLite.WP80, Version=3.8.3.1">
-      <Name>SQLite for Windows Phone %28SQLite.WP80, Version=3.8.3.1%29</Name>
+    <SDKReference Include="SQLite.WP80, Version=3.8.4.2">
+      <Name>SQLite for Windows Phone</Name>
     </SDKReference>
     <SDKReference Include="TestPlatform, Version=11.0" />
   </ItemGroup>

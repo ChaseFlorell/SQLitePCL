@@ -222,6 +222,64 @@ namespace SQLitePCL.Ext.WindowsStore.Test
         }
 
         [TestMethod]
+        public void TestColumnDataCount()
+        {
+            using (var connection = new SQLiteConnection("test.db"))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestColumnDataCount;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestColumnDataCount(id INTEGER, desc TEXT);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestColumnDataCount(id, desc) VALUES(@id,@desc);"))
+                {
+                    statement.Bind(1, 1);
+                    statement.Bind("@desc", "Desc 1");
+
+                    statement.Step();
+
+                    statement.Reset();
+                    statement.ClearBindings();
+                }
+
+                using (var statement = connection.Prepare("SELECT id, desc AS desc FROM TestColumnDataCount ORDER BY id ASC;"))
+                {
+                    var columnCount = statement.ColumnCount;
+                    var dataCount = statement.DataCount;
+
+                    Assert.AreEqual(2, columnCount);
+                    Assert.AreEqual(0, dataCount);
+
+                    statement.Step();
+
+                    columnCount = statement.ColumnCount;
+                    dataCount = statement.DataCount;
+
+                    Assert.AreEqual(2, columnCount);
+                    Assert.AreEqual(2, dataCount);
+
+                    statement.Step();
+
+                    columnCount = statement.ColumnCount;
+                    dataCount = statement.DataCount;
+
+                    Assert.AreEqual(2, columnCount);
+                    Assert.AreEqual(0, dataCount);
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestColumnDataCount;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
         public void TestBindParameter()
         {
             var numRecords = this.rnd.Next(1, 11);

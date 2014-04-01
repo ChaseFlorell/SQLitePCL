@@ -68,6 +68,8 @@ namespace SQLitePCL
 
         IntPtr Sqlite3ColumnDatabaseName(IntPtr stm, int columnIndex);
 
+        int Sqlite3DataCount(IntPtr stm);
+
         int Sqlite3Reset(IntPtr stm);
 
         int Sqlite3ClearBindings(IntPtr stm);

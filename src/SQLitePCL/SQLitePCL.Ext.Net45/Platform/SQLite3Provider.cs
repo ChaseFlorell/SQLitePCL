@@ -167,6 +167,11 @@ namespace SQLitePCL
             return NativeMethods.sqlite3_column_database_name(stm, columnIndex);
         }
 
+        int ISQLite3Provider.Sqlite3DataCount(IntPtr stm)
+        {
+            return NativeMethods.sqlite3_data_count(stm);
+        }
+
         int ISQLite3Provider.Sqlite3Reset(IntPtr stm)
         {
             return NativeMethods.sqlite3_reset(stm);
@@ -261,6 +266,9 @@ namespace SQLitePCL
 
             [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_column_database_name")]
             internal static extern IntPtr sqlite3_column_database_name(IntPtr stmHandle, int iCol);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_data_count")]
+            internal static extern int sqlite3_data_count(IntPtr stmHandle);
 
             [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_reset")]
             internal static extern int sqlite3_reset(IntPtr stmHandle);

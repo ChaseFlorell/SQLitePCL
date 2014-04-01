@@ -50,6 +50,22 @@ namespace SQLitePCL
             }
         }
 
+        public int ColumnCount
+        {
+            get
+            {
+                return this.sqlite3Provider.Sqlite3ColumnCount(this.stm);
+            }
+        }
+
+        public int DataCount
+        {
+            get
+            {
+                return this.sqlite3Provider.Sqlite3DataCount(this.stm);
+            }
+        }
+
         public object this[int index]
         {
             get

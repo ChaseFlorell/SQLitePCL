@@ -179,6 +179,11 @@ namespace SQLitePCL
             return new IntPtr(SQLite3RuntimeProvider.sqlite3_column_database_name(stm.ToInt64(), columnIndex));
         }
 
+        int ISQLite3Provider.Sqlite3DataCount(IntPtr stm)
+        {
+            return SQLite3RuntimeProvider.sqlite3_data_count(stm.ToInt64());
+        }
+
         int ISQLite3Provider.Sqlite3Reset(IntPtr stm)
         {
             return SQLite3RuntimeProvider.sqlite3_reset(stm.ToInt64());

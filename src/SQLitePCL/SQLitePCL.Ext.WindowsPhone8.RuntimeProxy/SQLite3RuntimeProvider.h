@@ -11,9 +11,9 @@
 namespace SQLitePCL
 {
 	namespace Ext
-	{ 
+	{
 		namespace WindowsPhone8
-		{ 
+		{
 			namespace RuntimeProxy
 			{
 				public ref class SQLite3RuntimeProvider sealed
@@ -71,11 +71,13 @@ namespace SQLitePCL
 
 					static int64 sqlite3_column_database_name(int64 stmHandle, int32 iCol);
 
+					static int32 sqlite3_data_count(int64 stmHandle);
+
 					static int32 sqlite3_reset(int64 stmHandle);
 
 					static int32 sqlite3_clear_bindings(int64 stmHandle);
 
-					static int32 sqlite3_finalize(int64 stmHandle);    
+					static int32 sqlite3_finalize(int64 stmHandle);
 				};
 			}
 		}

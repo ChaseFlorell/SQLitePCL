@@ -15,6 +15,10 @@ namespace SQLitePCL
     {
         ISQLiteConnection Connection { get; }
 
+        int ColumnCount { get; }
+
+        int DataCount { get; }
+
         object this[int index] { get; }
 
         SQLiteResult Step();

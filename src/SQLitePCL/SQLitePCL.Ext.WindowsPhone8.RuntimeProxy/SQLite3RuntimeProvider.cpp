@@ -37,7 +37,7 @@ int32 SQLite3RuntimeProvider::sqlite3_prepare_v2(int64 db, int64 zSql, int32 nBy
 {
 	sqlite3_stmt* sqlite3_stmt = nullptr;
 
-	int32 result = ::sqlite3_prepare_v2((sqlite3*) db,(const char*)zSql,nByte, &sqlite3_stmt,(const char**)pzTail);
+	int32 result = ::sqlite3_prepare_v2((sqlite3*)db, (const char*)zSql, nByte, &sqlite3_stmt, (const char**)pzTail);
 
 	if (ppStmpt)
 	{
@@ -59,11 +59,11 @@ int32 SQLite3RuntimeProvider::sqlite3_bind_int(int64 stmHandle, int32 iParam, in
 
 int32 SQLite3RuntimeProvider::sqlite3_bind_int64(int64 stmHandle, int32 iParam, int64 value)
 {
-	return ::sqlite3_bind_int64((sqlite3_stmt*)stmHandle,iParam,(sqlite3_int64)value);
+	return ::sqlite3_bind_int64((sqlite3_stmt*)stmHandle, iParam, (sqlite3_int64)value);
 }
 
 int32 SQLite3RuntimeProvider::sqlite3_bind_text(int64 stmHandle, int32 iParam, int64 value, int32 length, int64 destructor)
-{	
+{
 	return ::sqlite3_bind_text((sqlite3_stmt*)stmHandle, iParam, (const char*)value, length, (void(*)(void*))destructor);
 }
 
@@ -162,6 +162,11 @@ int64 SQLite3RuntimeProvider::sqlite3_column_database_name(int64 stmHandle, int3
 	return (int64)::sqlite3_column_database_name((sqlite3_stmt*)stmHandle, iCol);
 }
 
+int32 SQLite3RuntimeProvider::sqlite3_data_count(int64 stmHandle)
+{
+	return ::sqlite3_data_count((sqlite3_stmt*)stmHandle);
+}
+
 int32 SQLite3RuntimeProvider::sqlite3_reset(int64 stmHandle)
 {
 	return ::sqlite3_reset((sqlite3_stmt*)stmHandle);
@@ -175,4 +180,4 @@ int32 SQLite3RuntimeProvider::sqlite3_clear_bindings(int64 stmHandle)
 int32 SQLite3RuntimeProvider::sqlite3_finalize(int64 stmHandle)
 {
 	return ::sqlite3_finalize((sqlite3_stmt*)stmHandle);
-}    
+}
