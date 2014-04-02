@@ -57,6 +57,16 @@ namespace SQLitePCL
             return NativeMethods.sqlite3_errmsg(db);
         }
 
+        int ISQLite3Provider.Sqlite3CreateFunction(IntPtr db, IntPtr functionName, int numArg, bool deterministic, IntPtr func)
+        {
+            return NativeMethods.sqlite3_create_function(db, functionName, numArg, deterministic ? 0x801 : 1, IntPtr.Zero, func, IntPtr.Zero, IntPtr.Zero);
+        }
+
+        int ISQLite3Provider.Sqlite3CreateAggregate(IntPtr db, IntPtr aggregateName, int numArg, IntPtr step, IntPtr final)
+        {
+            return NativeMethods.sqlite3_create_function(db, aggregateName, numArg, 1, IntPtr.Zero, IntPtr.Zero, step, final);
+        }
+
         int ISQLite3Provider.Sqlite3BindInt(IntPtr stm, int paramIndex, int value)
         {
             return NativeMethods.sqlite3_bind_int(stm, paramIndex, value);
@@ -187,6 +197,81 @@ namespace SQLitePCL
             return NativeMethods.sqlite3_finalize(stm);
         }
 
+        int ISQLite3Provider.Sqlite3ValueInt(IntPtr value)
+        {
+            return NativeMethods.sqlite3_value_int(value);
+        }
+
+        long ISQLite3Provider.Sqlite3ValueInt64(IntPtr value)
+        {
+            return NativeMethods.sqlite3_value_int64(value);
+        }
+
+        IntPtr ISQLite3Provider.Sqlite3ValueText(IntPtr value)
+        {
+            return NativeMethods.sqlite3_value_text(value);
+        }
+
+        double ISQLite3Provider.Sqlite3ValueDouble(IntPtr value)
+        {
+            return NativeMethods.sqlite3_value_double(value);
+        }
+
+        IntPtr ISQLite3Provider.Sqlite3ValueBlob(IntPtr value)
+        {
+            return NativeMethods.sqlite3_value_blob(value);
+        }
+
+        int ISQLite3Provider.Sqlite3ValueType(IntPtr value)
+        {
+            return NativeMethods.sqlite3_value_type(value);
+        }
+
+        int ISQLite3Provider.Sqlite3ValueBytes(IntPtr value)
+        {
+            return NativeMethods.sqlite3_value_bytes(value);
+        }
+
+        void ISQLite3Provider.Sqlite3ResultInt(IntPtr context, int value)
+        {
+            NativeMethods.sqlite3_result_int(context, value);
+        }
+
+        void ISQLite3Provider.Sqlite3ResultInt64(IntPtr context, long value)
+        {
+            NativeMethods.sqlite3_result_int64(context, value);
+        }
+
+        void ISQLite3Provider.Sqlite3ResultText(IntPtr context, IntPtr value, int length, IntPtr destructor)
+        {
+            NativeMethods.sqlite3_result_text(context, value, length, destructor);
+        }
+
+        void ISQLite3Provider.Sqlite3ResultDouble(IntPtr context, double value)
+        {
+            NativeMethods.sqlite3_result_double(context, value);
+        }
+
+        void ISQLite3Provider.Sqlite3ResultBlob(IntPtr context, byte[] value, int length, IntPtr destructor)
+        {
+            NativeMethods.sqlite3_result_blob(context, value, length, destructor);
+        }
+
+        void ISQLite3Provider.Sqlite3ResultNull(IntPtr context)
+        {
+            NativeMethods.sqlite3_result_null(context);
+        }
+
+        void ISQLite3Provider.Sqlite3ResultError(IntPtr context, IntPtr value, int length)
+        {
+            NativeMethods.sqlite3_result_error(context, value, length);
+        }
+
+        IntPtr ISQLite3Provider.Sqlite3AggregateContext(IntPtr context, int length)
+        {
+            return NativeMethods.sqlite3_aggregate_context(context, length);
+        }
+
         private static class NativeMethods
         {
             [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_open")]
@@ -200,6 +285,9 @@ namespace SQLitePCL
 
             [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_errmsg")]
             internal static extern IntPtr sqlite3_errmsg(IntPtr db);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_create_function")]
+            internal static extern int sqlite3_create_function(IntPtr db, IntPtr functionName, int nArg, int p, IntPtr intPtr1, IntPtr func, IntPtr intPtr2, IntPtr intPtr3);
 
             [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_bind_int")]
             internal static extern int sqlite3_bind_int(IntPtr stmHandle, int iParam, int value);
@@ -278,6 +366,51 @@ namespace SQLitePCL
 
             [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_finalize")]
             internal static extern int sqlite3_finalize(IntPtr stmHandle);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_value_int")]
+            internal static extern int sqlite3_value_int(IntPtr value);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_value_int64")]
+            internal static extern long sqlite3_value_int64(IntPtr value);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_value_text")]
+            internal static extern IntPtr sqlite3_value_text(IntPtr value);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_value_double")]
+            internal static extern double sqlite3_value_double(IntPtr value);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_value_blob")]
+            internal static extern IntPtr sqlite3_value_blob(IntPtr value);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_value_type")]
+            internal static extern int sqlite3_value_type(IntPtr value);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_value_bytes")]
+            internal static extern int sqlite3_value_bytes(IntPtr value);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_result_int")]
+            internal static extern void sqlite3_result_int(IntPtr context, int value);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_result_int64")]
+            internal static extern void sqlite3_result_int64(IntPtr context, long value);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_result_text")]
+            internal static extern void sqlite3_result_text(IntPtr context, IntPtr value, int length, IntPtr destructor);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_result_double")]
+            internal static extern void sqlite3_result_double(IntPtr context, double value);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_result_blob")]
+            internal static extern void sqlite3_result_blob(IntPtr context, byte[] value, int length, IntPtr destructor);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_result_null")]
+            internal static extern void sqlite3_result_null(IntPtr context);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_result_error")]
+            internal static extern void sqlite3_result_error(IntPtr context, IntPtr value, int length);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_aggregate_context")]
+            internal static extern IntPtr sqlite3_aggregate_context(IntPtr context, int length);
         }
     }
 }

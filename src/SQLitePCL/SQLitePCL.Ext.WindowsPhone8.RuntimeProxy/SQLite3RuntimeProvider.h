@@ -27,6 +27,8 @@ namespace SQLitePCL
 
 					static int64 sqlite3_errmsg(int64 db);
 
+					static int32 sqlite3_create_function(int64 db, int64 zFunctionName, int32 nArg, int32 eTextRep, int64 pApp, int64 xFunc, int64 xStep, int64 xFinal);
+
 					static int32 sqlite3_bind_int(int64 stmHandle, int32 iParam, int32 value);
 
 					static int32 sqlite3_bind_int64(int64 stmHandle, int32 iParam, int64 value);
@@ -78,6 +80,36 @@ namespace SQLitePCL
 					static int32 sqlite3_clear_bindings(int64 stmHandle);
 
 					static int32 sqlite3_finalize(int64 stmHandle);
+
+					static int32 sqlite3_value_int(int64 value);
+
+					static int64 sqlite3_value_int64(int64 value);
+
+					static int64 sqlite3_value_text(int64 value);
+
+					static float64 sqlite3_value_double(int64 value);
+
+					static int64 sqlite3_value_blob(int64 value);
+
+					static int32 sqlite3_value_type(int64 value);
+
+					static int32 sqlite3_value_bytes(int64 value);
+
+					static void sqlite3_result_int(int64 context, int32 result);
+
+					static void sqlite3_result_int64(int64 context, int64 result);
+
+					static void sqlite3_result_text(int64 context, int64 result, int32 length, int64 destructor);
+
+					static void sqlite3_result_double(int64 context, float64 result);
+
+					static void sqlite3_result_blob(int64 context, const Platform::Array<uint8>^ result, int32 length, int64 destructor);
+
+					static void sqlite3_result_null(int64 context);
+
+					static void sqlite3_result_error(int64 context, int64 result, int32 length);
+
+					static int64 sqlite3_aggregate_context(int64 context, int32 length);
 				};
 			}
 		}

@@ -52,6 +52,11 @@ int64 SQLite3RuntimeProvider::sqlite3_errmsg(int64 db)
 	return (int64)::sqlite3_errmsg((sqlite3*)db);
 }
 
+int32 SQLite3RuntimeProvider::sqlite3_create_function(int64 db, int64 zFunctionName, int32 nArg, int32 eTextRep, int64 pApp, int64 xFunc, int64 xStep, int64 xFinal)
+{
+	return ::sqlite3_create_function((sqlite3*)db, (const char*)zFunctionName, nArg, eTextRep, (void*)pApp, (void(*)(sqlite3_context*, int, sqlite3_value**))xFunc, (void(*)(sqlite3_context*, int, sqlite3_value**))xStep, (void(*)(sqlite3_context*))xFinal);
+}
+
 int32 SQLite3RuntimeProvider::sqlite3_bind_int(int64 stmHandle, int32 iParam, int32 value)
 {
 	return ::sqlite3_bind_int((sqlite3_stmt*)stmHandle, iParam, value);
@@ -180,4 +185,79 @@ int32 SQLite3RuntimeProvider::sqlite3_clear_bindings(int64 stmHandle)
 int32 SQLite3RuntimeProvider::sqlite3_finalize(int64 stmHandle)
 {
 	return ::sqlite3_finalize((sqlite3_stmt*)stmHandle);
+}
+
+int32 SQLite3RuntimeProvider::sqlite3_value_int(int64 value)
+{
+	return ::sqlite3_value_int((sqlite3_value*)value);
+}
+
+int64 SQLite3RuntimeProvider::sqlite3_value_int64(int64 value)
+{
+	return (int64)::sqlite3_value_int64((sqlite3_value*)value);
+}
+
+int64 SQLite3RuntimeProvider::sqlite3_value_text(int64 value)
+{
+	return (int64)::sqlite3_value_text((sqlite3_value*)value);
+}
+
+float64 SQLite3RuntimeProvider::sqlite3_value_double(int64 value)
+{
+	return ::sqlite3_value_double((sqlite3_value*)value);
+}
+
+int64 SQLite3RuntimeProvider::sqlite3_value_blob(int64 value)
+{
+	return (int64)::sqlite3_value_blob((sqlite3_value*)value);
+}
+
+int32 SQLite3RuntimeProvider::sqlite3_value_type(int64 value)
+{
+	return ::sqlite3_value_type((sqlite3_value*)value);
+}
+
+int32 SQLite3RuntimeProvider::sqlite3_value_bytes(int64 value)
+{
+	return ::sqlite3_value_bytes((sqlite3_value*)value);
+}
+
+void SQLite3RuntimeProvider::sqlite3_result_int(int64 context, int32 result)
+{
+	::sqlite3_result_int((sqlite3_context*)context, result);
+}
+
+void SQLite3RuntimeProvider::sqlite3_result_int64(int64 context, int64 result)
+{
+	::sqlite3_result_int64((sqlite3_context*)context, (sqlite3_int64)result);
+}
+
+void SQLite3RuntimeProvider::sqlite3_result_text(int64 context, int64 result, int32 length, int64 destructor)
+{
+	::sqlite3_result_text((sqlite3_context*)context, (const char*)result, length, (void(*)(void*))destructor);
+}
+
+void SQLite3RuntimeProvider::sqlite3_result_double(int64 context, float64 result)
+{
+	::sqlite3_result_double((sqlite3_context*)context, result);
+}
+
+void SQLite3RuntimeProvider::sqlite3_result_blob(int64 context, const Platform::Array<uint8>^ result, int32 length, int64 destructor)
+{
+	::sqlite3_result_blob((sqlite3_context*)context, result ? result->Data : nullptr, length, (void(*)(void*))destructor);
+}
+
+void SQLite3RuntimeProvider::sqlite3_result_null(int64 context)
+{
+	::sqlite3_result_null((sqlite3_context*)context);
+}
+
+void SQLite3RuntimeProvider::sqlite3_result_error(int64 context, int64 result, int32 length)
+{
+	::sqlite3_result_error((sqlite3_context*)context, (const char*)result, length);
+}
+
+int64 SQLite3RuntimeProvider::sqlite3_aggregate_context(int64 context, int32 length)
+{
+	return (int64)::sqlite3_aggregate_context((sqlite3_context*)context, length);
 }

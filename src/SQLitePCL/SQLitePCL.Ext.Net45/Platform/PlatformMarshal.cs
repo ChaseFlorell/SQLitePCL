@@ -13,6 +13,15 @@ namespace SQLitePCL
     using System.Runtime.InteropServices;
     using System.Text;
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void FunctionNativeCdecl(IntPtr context, int numberOfArguments, IntPtr[] arguments);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void AggregateStepNativeCdecl(IntPtr context, int numberOfArguments, IntPtr[] arguments);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void AggregateFinalNativeCdecl(IntPtr context);
+
     /// <summary>
     /// Implements the <see cref="IPlatformMarshal"/> interface for .Net45 Framework.
     /// </summary>
@@ -38,7 +47,7 @@ namespace SQLitePCL
             }
         }
 
-        void IPlatformMarshal.CleanUpStringNativeUTF8(System.IntPtr nativeString)
+        void IPlatformMarshal.CleanUpStringNativeUTF8(IntPtr nativeString)
         {
             Marshal.FreeHGlobal(nativeString);
         }
@@ -67,7 +76,7 @@ namespace SQLitePCL
             return result;
         }
 
-        string IPlatformMarshal.MarshalStringNativeUTF8ToManaged(System.IntPtr nativeString)
+        string IPlatformMarshal.MarshalStringNativeUTF8ToManaged(IntPtr nativeString)
         {
             string result = null;
 
@@ -82,7 +91,7 @@ namespace SQLitePCL
             return result;
         }
 
-        int IPlatformMarshal.GetNativeUTF8Size(System.IntPtr nativeString)
+        int IPlatformMarshal.GetNativeUTF8Size(IntPtr nativeString)
         {
             var offset = 0;
 
@@ -99,9 +108,34 @@ namespace SQLitePCL
             return offset;
         }
 
-        void IPlatformMarshal.Copy(System.IntPtr source, byte[] destination, int startIndex, int length)
+        Delegate IPlatformMarshal.ApplyNativeCallingConventionToFunction(FunctionNative function)
+        {
+            return new FunctionNativeCdecl((context, numberOfArguments, arguments) => { function.Invoke(context, numberOfArguments, arguments); });
+        }
+
+        Delegate IPlatformMarshal.ApplyNativeCallingConventionToAggregateStep(AggregateStepNative step)
+        {
+            return new AggregateStepNativeCdecl((context, numberOfArguments, arguments) => { step.Invoke(context, numberOfArguments, arguments); });
+        }
+
+        Delegate IPlatformMarshal.ApplyNativeCallingConventionToAggregateFinal(AggregateFinalNative final)
+        {
+            return new AggregateFinalNativeCdecl((context) => { final.Invoke(context); });
+        }
+
+        IntPtr IPlatformMarshal.MarshalDelegateToNativeFunctionPointer(Delegate del)
+        {
+            return Marshal.GetFunctionPointerForDelegate(del);
+        }
+
+        void IPlatformMarshal.Copy(IntPtr source, byte[] destination, int startIndex, int length)
         {
             Marshal.Copy(source, destination, startIndex, length);
+        }
+
+        void IPlatformMarshal.Copy(byte[] source, IntPtr destination, int startIndex, int length)
+        {
+            Marshal.Copy(source, startIndex, destination, length);
         }
     }
 }

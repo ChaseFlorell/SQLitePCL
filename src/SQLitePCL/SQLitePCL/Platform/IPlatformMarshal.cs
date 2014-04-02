@@ -11,6 +11,12 @@ namespace SQLitePCL
 {
     using System;
 
+    public delegate void FunctionNative(IntPtr context, int numberOfArguments, IntPtr[] arguments);
+
+    public delegate void AggregateStepNative(IntPtr context, int numberOfArguments, IntPtr[] arguments);
+
+    public delegate void AggregateFinalNative(IntPtr context);
+
     /// <summary>
     /// An interface for platform-specific assemblies to implement to support 
     /// Marshaling operations.
@@ -27,6 +33,16 @@ namespace SQLitePCL
 
         int GetNativeUTF8Size(IntPtr nativeString);
 
+        Delegate ApplyNativeCallingConventionToFunction(FunctionNative function);
+
+        Delegate ApplyNativeCallingConventionToAggregateStep(AggregateStepNative step);
+
+        Delegate ApplyNativeCallingConventionToAggregateFinal(AggregateFinalNative final);
+
+        IntPtr MarshalDelegateToNativeFunctionPointer(Delegate del);
+
         void Copy(IntPtr source, byte[] destination, int startIndex, int length);
+
+        void Copy(byte[] source, IntPtr destination, int startIndex, int length);
     }
 }

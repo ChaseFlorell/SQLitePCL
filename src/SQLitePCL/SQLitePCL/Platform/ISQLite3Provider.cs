@@ -24,6 +24,10 @@ namespace SQLitePCL
 
         IntPtr Sqlite3Errmsg(IntPtr db);
 
+        int Sqlite3CreateFunction(IntPtr db, IntPtr functionName, int numArg, bool deterministic, IntPtr func);
+
+        int Sqlite3CreateAggregate(IntPtr db, IntPtr aggregateName, int numArg, IntPtr step, IntPtr final);
+
         int Sqlite3BindInt(IntPtr stm, int paramIndex, int value);
 
         int Sqlite3BindInt64(IntPtr stm, int paramIndex, long value);
@@ -75,5 +79,35 @@ namespace SQLitePCL
         int Sqlite3ClearBindings(IntPtr stm);
 
         int Sqlite3Finalize(IntPtr stm);
+
+        int Sqlite3ValueInt(IntPtr value);
+
+        long Sqlite3ValueInt64(IntPtr value);
+
+        IntPtr Sqlite3ValueText(IntPtr value);
+
+        double Sqlite3ValueDouble(IntPtr value);
+
+        IntPtr Sqlite3ValueBlob(IntPtr value);
+
+        int Sqlite3ValueType(IntPtr value);
+
+        int Sqlite3ValueBytes(IntPtr value);
+
+        void Sqlite3ResultInt(IntPtr context, int value);
+
+        void Sqlite3ResultInt64(IntPtr context, long value);
+
+        void Sqlite3ResultText(IntPtr context, IntPtr value, int length, IntPtr destructor);
+
+        void Sqlite3ResultDouble(IntPtr context, double value);
+
+        void Sqlite3ResultBlob(IntPtr context, byte[] value, int length, IntPtr destructor);
+
+        void Sqlite3ResultNull(IntPtr context);
+
+        void Sqlite3ResultError(IntPtr context, IntPtr value, int length);
+
+        IntPtr Sqlite3AggregateContext(IntPtr context, int length);
     }
 }

@@ -69,6 +69,16 @@ namespace SQLitePCL
             return new IntPtr(SQLite3RuntimeProvider.sqlite3_errmsg(db.ToInt64()));
         }
 
+        int ISQLite3Provider.Sqlite3CreateFunction(IntPtr db, IntPtr functionName, int numArg, bool deterministic, IntPtr func)
+        {
+            return SQLite3RuntimeProvider.sqlite3_create_function(db.ToInt64(), functionName.ToInt64(), numArg, deterministic ? 0x801 : 1, IntPtr.Zero.ToInt64(), func.ToInt64(), IntPtr.Zero.ToInt64(), IntPtr.Zero.ToInt64());
+        }
+
+        int ISQLite3Provider.Sqlite3CreateAggregate(IntPtr db, IntPtr aggregateName, int numArg, IntPtr step, IntPtr final)
+        {
+            return SQLite3RuntimeProvider.sqlite3_create_function(db.ToInt64(), aggregateName.ToInt64(), numArg, 1, IntPtr.Zero.ToInt64(), IntPtr.Zero.ToInt64(), step.ToInt64(), final.ToInt64());
+        }
+
         int ISQLite3Provider.Sqlite3BindInt(IntPtr stm, int paramIndex, int value)
         {
             return SQLite3RuntimeProvider.sqlite3_bind_int(stm.ToInt64(), paramIndex, value);
@@ -197,6 +207,81 @@ namespace SQLitePCL
         int ISQLite3Provider.Sqlite3Finalize(IntPtr stm)
         {
             return SQLite3RuntimeProvider.sqlite3_finalize(stm.ToInt64());
+        }
+
+        int ISQLite3Provider.Sqlite3ValueInt(IntPtr value)
+        {
+            return SQLite3RuntimeProvider.sqlite3_value_int(value.ToInt64());
+        }
+
+        long ISQLite3Provider.Sqlite3ValueInt64(IntPtr value)
+        {
+            return SQLite3RuntimeProvider.sqlite3_value_int64(value.ToInt64());
+        }
+
+        IntPtr ISQLite3Provider.Sqlite3ValueText(IntPtr value)
+        {
+            return new IntPtr(SQLite3RuntimeProvider.sqlite3_value_text(value.ToInt64()));
+        }
+
+        double ISQLite3Provider.Sqlite3ValueDouble(IntPtr value)
+        {
+            return SQLite3RuntimeProvider.sqlite3_value_double(value.ToInt64());
+        }
+
+        IntPtr ISQLite3Provider.Sqlite3ValueBlob(IntPtr value)
+        {
+            return new IntPtr(SQLite3RuntimeProvider.sqlite3_value_blob(value.ToInt64()));
+        }
+
+        int ISQLite3Provider.Sqlite3ValueType(IntPtr value)
+        {
+            return SQLite3RuntimeProvider.sqlite3_value_type(value.ToInt64());
+        }
+
+        int ISQLite3Provider.Sqlite3ValueBytes(IntPtr value)
+        {
+            return SQLite3RuntimeProvider.sqlite3_value_bytes(value.ToInt64());
+        }
+
+        void ISQLite3Provider.Sqlite3ResultInt(IntPtr context, int value)
+        {
+            SQLite3RuntimeProvider.sqlite3_result_int(context.ToInt64(), value);
+        }
+
+        void ISQLite3Provider.Sqlite3ResultInt64(IntPtr context, long value)
+        {
+            SQLite3RuntimeProvider.sqlite3_result_int64(context.ToInt64(), value);
+        }
+
+        void ISQLite3Provider.Sqlite3ResultText(IntPtr context, IntPtr value, int length, IntPtr destructor)
+        {
+            SQLite3RuntimeProvider.sqlite3_result_text(context.ToInt64(), value.ToInt64(), length, destructor.ToInt64());
+        }
+
+        void ISQLite3Provider.Sqlite3ResultDouble(IntPtr context, double value)
+        {
+            SQLite3RuntimeProvider.sqlite3_result_double(context.ToInt64(), value);
+        }
+
+        void ISQLite3Provider.Sqlite3ResultBlob(IntPtr context, byte[] value, int length, IntPtr destructor)
+        {
+            SQLite3RuntimeProvider.sqlite3_result_blob(context.ToInt64(), value, length, destructor.ToInt64());
+        }
+
+        void ISQLite3Provider.Sqlite3ResultNull(IntPtr context)
+        {
+            SQLite3RuntimeProvider.sqlite3_result_null(context.ToInt64());
+        }
+
+        void ISQLite3Provider.Sqlite3ResultError(IntPtr context, IntPtr value, int length)
+        {
+            SQLite3RuntimeProvider.sqlite3_result_error(context.ToInt64(), value.ToInt64(), length);
+        }
+
+        IntPtr ISQLite3Provider.Sqlite3AggregateContext(IntPtr context, int length)
+        {
+            return new IntPtr(SQLite3RuntimeProvider.sqlite3_aggregate_context(context.ToInt64(), length));
         }
     }
 }

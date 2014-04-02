@@ -10,10 +10,21 @@
 namespace SQLitePCL
 {
     using System;
+    using System.Collections.Generic;
+
+    public delegate object Function(object[] arguments);
+
+    public delegate void AggregateStep(IDictionary<string, object> aggregateContextData, object[] arguments);
+
+    public delegate object AggregateFinal(IDictionary<string, object> aggregateContextData);
 
     public interface ISQLiteConnection : IDisposable
     {
         ISQLiteStatement Prepare(string sql);
+
+        void CreateFunction(string name, int numberOfArguments, Function function, bool deterministic);
+
+        void CreateAggregate(string name, int numberOfArguments, AggregateStep step, AggregateFinal final);
 
         string ErrorMessage();
     }
