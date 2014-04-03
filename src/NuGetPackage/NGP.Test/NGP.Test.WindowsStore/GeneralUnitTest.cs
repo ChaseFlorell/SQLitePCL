@@ -187,7 +187,7 @@ namespace NGP.Test.WindowsStore
                 Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
                 Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
                 Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
-                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.0000001));
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) <= Math.Abs(insertedRecord.Item4 * 0.0000001));
             }
         }
 
@@ -216,6 +216,183 @@ namespace NGP.Test.WindowsStore
                 }
 
                 using (var statement = connection.Prepare("DROP TABLE TestColumnName;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void TestColumnDataCount()
+        {
+            using (var connection = new SQLiteConnection("test.db"))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestColumnDataCount;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestColumnDataCount(id INTEGER, desc TEXT);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestColumnDataCount(id, desc) VALUES(@id,@desc);"))
+                {
+                    statement.Bind(1, 1);
+                    statement.Bind("@desc", "Desc 1");
+
+                    statement.Step();
+
+                    statement.Reset();
+                    statement.ClearBindings();
+                }
+
+                using (var statement = connection.Prepare("SELECT id, desc AS desc FROM TestColumnDataCount ORDER BY id ASC;"))
+                {
+                    var columnCount = statement.ColumnCount;
+                    var dataCount = statement.DataCount;
+
+                    Assert.AreEqual(2, columnCount);
+                    Assert.AreEqual(0, dataCount);
+
+                    statement.Step();
+
+                    columnCount = statement.ColumnCount;
+                    dataCount = statement.DataCount;
+
+                    Assert.AreEqual(2, columnCount);
+                    Assert.AreEqual(2, dataCount);
+
+                    statement.Step();
+
+                    columnCount = statement.ColumnCount;
+                    dataCount = statement.DataCount;
+
+                    Assert.AreEqual(2, columnCount);
+                    Assert.AreEqual(0, dataCount);
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestColumnDataCount;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void TestFunction()
+        {
+            using (var connection = new SQLiteConnection("test.db"))
+            {
+                connection.CreateFunction(
+                    "CUSTOMFUNCSUM",
+                    2,
+                    new Function((arguments) =>
+                    {
+                        return (long)arguments[0] + (long)arguments[1];
+                    }),
+                    true);
+
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestFunction;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestFunction(id INTEGER, a INTEGER, b INTEGER);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestFunction(id, a, b) VALUES(@id, @a, @b);"))
+                {
+                    for (var value = 0; value < 10; value++)
+                    {
+                        statement.Bind(1, value);
+                        statement.Bind("@a", value - 1);
+                        statement.Bind("@b", value + 1);
+
+                        statement.Step();
+
+                        statement.Reset();
+                        statement.ClearBindings();
+                    }
+                }
+
+                using (var statement = connection.Prepare("SELECT id, CUSTOMFUNCSUM(a, b) / 2 AS CustomResult FROM TestFunction ORDER BY id ASC;"))
+                {
+                    while (statement.Step() == SQLiteResult.ROW)
+                    {
+                        var id = (long)statement[0];
+                        var customResult = (long)statement[1];
+
+                        Assert.AreEqual(id, customResult);
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestFunction;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void TestAggregate()
+        {
+            using (var connection = new SQLiteConnection("test.db"))
+            {
+                connection.CreateAggregate(
+                    "CUSTOMAGGSUM",
+                    1,
+                    new AggregateStep((aggregateContextData, arguments) =>
+                    {
+                        aggregateContextData["Acum"] = aggregateContextData.ContainsKey("Acum") ? (long)arguments[0] + (long)aggregateContextData["Acum"] : (long)arguments[0];
+                    }),
+                    new AggregateFinal((aggregateContextData) =>
+                    {
+                        return aggregateContextData.ContainsKey("Acum") ? (long)aggregateContextData["Acum"] : 0L;
+                    }));
+
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestAggregate;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestAggregate(id INTEGER);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestAggregate(id) VALUES(@id);"))
+                {
+                    for (var value = 0; value < 10; value++)
+                    {
+                        statement.Bind(1, value);
+
+                        statement.Step();
+
+                        statement.Reset();
+                        statement.ClearBindings();
+                    }
+                }
+
+                using (var statement = connection.Prepare("SELECT CUSTOMAGGSUM(id) AS CustomResult FROM TestAggregate;"))
+                {
+                    var rowTotal = 0;
+                    while (statement.Step() == SQLiteResult.ROW)
+                    {
+                        rowTotal++;
+
+                        var totalSum = (long)statement[0];
+
+                        Assert.AreEqual(45, totalSum);
+                    }
+
+                    Assert.AreEqual(1, rowTotal);
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestAggregate;"))
                 {
                     statement.Step();
                 }
@@ -297,7 +474,7 @@ namespace NGP.Test.WindowsStore
                 Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
                 Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
                 Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
-                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.0000001));
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) <= Math.Abs(insertedRecord.Item4 * 0.0000001));
                 Assert.IsTrue(insertedRecord.Item5.SequenceEqual(queriedRecord.Item5));
             }
         }
@@ -389,7 +566,7 @@ namespace NGP.Test.WindowsStore
                 Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
                 Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
                 Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
-                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.0000001));
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) <= Math.Abs(insertedRecord.Item4 * 0.0000001));
                 Assert.IsTrue(insertedRecord.Item5.SequenceEqual(queriedRecord.Item5));
             }
         }
@@ -473,7 +650,7 @@ namespace NGP.Test.WindowsStore
                 Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
                 Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
                 Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
-                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.0000001));
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) <= Math.Abs(insertedRecord.Item4 * 0.0000001));
             }
         }
 
@@ -555,7 +732,7 @@ namespace NGP.Test.WindowsStore
                 Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
                 Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
                 Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
-                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) < Math.Abs(insertedRecord.Item4 * 0.0000001));
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) <= Math.Abs(insertedRecord.Item4 * 0.0000001));
             }
         }
 
