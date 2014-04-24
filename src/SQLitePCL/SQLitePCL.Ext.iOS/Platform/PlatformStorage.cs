@@ -12,9 +12,9 @@ namespace SQLitePCL
     using System.IO;
 
     /// <summary>
-    /// Implements the <see cref="IPlatformStorage"/> interface for .Net45 Framework.
+    /// Implements the <see cref="IPlatformStorage"/> interface for Xamarin iOS.
     /// </summary>
-    internal class PlatformStorage : IPlatformStorage
+    internal sealed class PlatformStorage : IPlatformStorage
     {
         /// <summary>
         /// A singleton instance of the <see cref="PlatformStorage"/>.
@@ -28,7 +28,7 @@ namespace SQLitePCL
         /// <summary>
         /// A singleton instance of the <see cref="PlatformStorage"/>.
         /// </summary>
-        public static IPlatformStorage Instance
+        internal static IPlatformStorage Instance
         {
             get
             {

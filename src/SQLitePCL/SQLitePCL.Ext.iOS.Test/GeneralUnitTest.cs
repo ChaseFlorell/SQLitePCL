@@ -7,17 +7,17 @@
 // 
 // See the Apache 2 License for the specific language governing permissions and limitations under the License.
 
-namespace SQLitePCL.Ext.iOS.Test
+namespace SQLitePCL.Ext.IOS.Test
 {
-	using NUnit.Framework;
-	using TestClassAttribute = NUnit.Framework.TestFixtureAttribute;
-	using TestMethodAttribute = NUnit.Framework.TestAttribute;
     using System;
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text;
+    using NUnit.Framework;
+    using TestClassAttribute = NUnit.Framework.TestFixtureAttribute;
+    using TestMethodAttribute = NUnit.Framework.TestAttribute;
 
     [TestClass]
     public class GeneralUnitTest
@@ -52,7 +52,7 @@ namespace SQLitePCL.Ext.iOS.Test
         [ExpectedException(typeof(SQLiteException))]
         public void TestInvalidPathConnection()
         {
-            using (var connection = new SQLiteConnection("C:\\AN INVALID PATH\\test.db"))
+            using (var connection = new SQLiteConnection("/AN INVALID PATH/test.db"))
             {
             }
         }

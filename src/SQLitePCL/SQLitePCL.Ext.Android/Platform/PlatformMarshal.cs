@@ -14,18 +14,19 @@ namespace SQLitePCL
     using System.Text;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	internal delegate void FunctionNativeCdecl(IntPtr context, int numberOfArguments, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] IntPtr[] arguments);
+    internal delegate void FunctionNativeCdecl(IntPtr context, int numberOfArguments, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] IntPtr[] arguments);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-	internal delegate void AggregateStepNativeCdecl(IntPtr context, int numberOfArguments, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] IntPtr[] arguments);
+    internal delegate void AggregateStepNativeCdecl(IntPtr context, int numberOfArguments, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] IntPtr[] arguments);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void AggregateFinalNativeCdecl(IntPtr context);
 
     /// <summary>
-    /// Implements the <see cref="IPlatformMarshal"/> interface for .Net45 Framework.
+    /// Implements the <see cref="IPlatformMarshal"/> interface for Xamarin Android.
     /// </summary>
-    internal class PlatformMarshal : IPlatformMarshal
+    [Android.Runtime.Preserve(AllMembers = true)]
+    internal sealed class PlatformMarshal : IPlatformMarshal
     {
         /// <summary>
         /// A singleton instance of the <see cref="PlatformMarshal"/>.
@@ -39,7 +40,7 @@ namespace SQLitePCL
         /// <summary>
         /// A singleton instance of the <see cref="PlatformMarshal"/>.
         /// </summary>
-        public static IPlatformMarshal Instance
+        internal static IPlatformMarshal Instance
         {
             get
             {

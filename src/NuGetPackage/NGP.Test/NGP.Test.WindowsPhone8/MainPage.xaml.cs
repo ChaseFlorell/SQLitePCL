@@ -1,9 +1,9 @@
 ﻿namespace NGP.Test.WindowsPhone8
 {
+    using System.Threading;
     using Microsoft.Phone.Controls;
     using Microsoft.VisualStudio.TestPlatform.Core;
     using Microsoft.VisualStudio.TestPlatform.TestExecutor;
-    using System.Threading;
     using vstest_executionengine_platformbridge;
 
     public partial class MainPage : PhoneApplicationPage

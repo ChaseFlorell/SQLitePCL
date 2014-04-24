@@ -9,13 +9,13 @@
 
 namespace SQLitePCL
 {
-    using SQLitePCL.Ext.WindowsPhone8.RuntimeProxy;
     using System;
+    using SQLitePCL.Ext.WindowsPhone8.RuntimeProxy;
 
     /// <summary>
     /// Implements the <see cref="ISQLite3Provider"/> interface for Windows Store.
     /// </summary>
-    internal class SQLite3Provider : ISQLite3Provider
+    internal sealed class SQLite3Provider : ISQLite3Provider
     {
         /// <summary>
         /// A singleton instance of the <see cref="SQLite3Provider"/>.
@@ -29,7 +29,7 @@ namespace SQLitePCL
         /// <summary>
         /// A singleton instance of the <see cref="SQLite3Provider"/>.
         /// </summary>
-        public static ISQLite3Provider Instance
+        internal static ISQLite3Provider Instance
         {
             get
             {

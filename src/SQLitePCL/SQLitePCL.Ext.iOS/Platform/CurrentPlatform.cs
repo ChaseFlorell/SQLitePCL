@@ -9,10 +9,12 @@
 
 namespace SQLitePCL
 {
+    using MonoTouch.Foundation;
+
     /// <summary>
-    /// Implements the <see cref="IPlatform"/> interface for .Net45 Framework.
+    /// Implements the <see cref="IPlatform"/> interface for Xamarin iOS.
     /// </summary>
-    internal class CurrentPlatform : IPlatform
+    public sealed class CurrentPlatform : IPlatform
     {
         /// <summary>
         /// Returns a platform-specific implemention of <see cref="IPlatformMarshal"/>.
@@ -45,6 +47,14 @@ namespace SQLitePCL
             {
                 return SQLitePCL.SQLite3Provider.Instance;
             }
+        }
+
+        /// <summary>
+        /// You must call this method from your application in order to ensure
+        /// that this platform specific assembly is included in your app.
+        /// </summary>
+        public static void Init()
+        {
         }
     }
 }

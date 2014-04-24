@@ -14,10 +14,10 @@ namespace SQLitePCL
     using System.Text;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    internal delegate void FunctionNativeCdecl(IntPtr context, int numberOfArguments, IntPtr[] arguments);
+    internal delegate void FunctionNativeCdecl(IntPtr context, int numberOfArguments, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] IntPtr[] arguments);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    internal delegate void AggregateStepNativeCdecl(IntPtr context, int numberOfArguments, IntPtr[] arguments);
+    internal delegate void AggregateStepNativeCdecl(IntPtr context, int numberOfArguments, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] IntPtr[] arguments);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void AggregateFinalNativeCdecl(IntPtr context);
@@ -25,7 +25,7 @@ namespace SQLitePCL
     /// <summary>
     /// Implements the <see cref="IPlatformMarshal"/> interface for .Net45 Framework.
     /// </summary>
-    internal class PlatformMarshal : IPlatformMarshal
+    internal sealed class PlatformMarshal : IPlatformMarshal
     {
         /// <summary>
         /// A singleton instance of the <see cref="PlatformMarshal"/>.
@@ -39,7 +39,7 @@ namespace SQLitePCL
         /// <summary>
         /// A singleton instance of the <see cref="PlatformMarshal"/>.
         /// </summary>
-        public static IPlatformMarshal Instance
+        internal static IPlatformMarshal Instance
         {
             get
             {

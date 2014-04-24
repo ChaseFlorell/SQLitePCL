@@ -10,9 +10,10 @@
 namespace SQLitePCL
 {
     /// <summary>
-    /// Implements the <see cref="IPlatform"/> interface for .Net45 Framework.
+    /// Implements the <see cref="IPlatform"/> interface for Xamarin Android.
     /// </summary>
-    internal class CurrentPlatform : IPlatform
+    [Android.Runtime.Preserve(AllMembers = true)]
+    internal sealed class CurrentPlatform : IPlatform
     {
         /// <summary>
         /// Returns a platform-specific implemention of <see cref="IPlatformMarshal"/>.

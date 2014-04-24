@@ -1,13 +1,13 @@
 ﻿namespace SQLitePCL.Ext.WindowsPhone8.Test
 {
-    using Microsoft.Phone.Controls;
-    using Microsoft.Phone.Shell;
-    using SQLitePCL.Ext.WindowsPhone8.Test.Resources;
     using System;
     using System.Diagnostics;
     using System.Windows;
     using System.Windows.Markup;
     using System.Windows.Navigation;
+    using Microsoft.Phone.Controls;
+    using Microsoft.Phone.Shell;
+    using SQLitePCL.Ext.WindowsPhone8.Test.Resources;
 
     public partial class App : Application
     {

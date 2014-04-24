@@ -1,45 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
-using MonoTouch.NUnit.UI;
-
-namespace SQLitePCL.Ext.iOS.Test
+﻿namespace SQLitePCL.Ext.IOS.Test
 {
-	// The UIApplicationDelegate for the application. This class is responsible for launching the 
-	// User Interface of the application, as well as listening (and optionally responding) to 
-	// application events from iOS.
-	[Register("AppDelegate")]
-	public partial class AppDelegate : UIApplicationDelegate
-	{
-		// class-level declarations
-		UIWindow window;
-		TouchRunner runner;
+    using MonoTouch.Foundation;
+    using MonoTouch.NUnit.UI;
+    using MonoTouch.UIKit;
 
-		//
-		// This method is invoked when the application has loaded and is ready to run. In this 
-		// method you should instantiate the window, load the UI into it and then make the window
-		// visible.
-		//
-		// You have 17 seconds to return from this method, or iOS will terminate your application.
-		//
-		public override bool FinishedLaunching(UIApplication app, NSDictionary options)
-		{
-			// create a new window instance based on the screen size
-			window = new UIWindow(UIScreen.MainScreen.Bounds);
-			runner = new TouchRunner(window);
+    // The UIApplicationDelegate for the application. This class is responsible for launching the 
+    // User Interface of the application, as well as listening (and optionally responding) to 
+    // application events from iOS.
+    [Register("AppDelegate")]
+    public partial class AppDelegate : UIApplicationDelegate
+    {
+        // class-level declarations
+        private UIWindow window;
+        private TouchRunner runner;
 
-			// register every tests included in the main application/assembly
-			runner.Add(System.Reflection.Assembly.GetExecutingAssembly());
+        // This method is invoked when the application has loaded and is ready to run. In this 
+        // method you should instantiate the window, load the UI into it and then make the window
+        // visible.
+        //
+        // You have 17 seconds to return from this method, or iOS will terminate your application.
+        public override bool FinishedLaunching(UIApplication app, NSDictionary options)
+        {
+            // create a new window instance based on the screen size
+            this.window = new UIWindow(UIScreen.MainScreen.Bounds);
+            this.runner = new TouchRunner(this.window);
 
-			window.RootViewController = new UINavigationController(runner.GetViewController());
+            // register every tests included in the main application/assembly
+            this.runner.Add(System.Reflection.Assembly.GetExecutingAssembly());
 
-			// make the window visible
-			window.MakeKeyAndVisible();
+            this.window.RootViewController = new UINavigationController(this.runner.GetViewController());
 
-			return true;
-		}
-	}
+            // make the window visible
+            this.window.MakeKeyAndVisible();
+
+            return true;
+        }
+    }
 }

@@ -1,23 +1,23 @@
-﻿using System.Reflection;
-using Android.App;
+﻿using Android.App;
 using Android.OS;
-using Xamarin.Android.NUnitLite;
 
 namespace SQLitePCL.Ext.Android.Test
 {
-	[Activity (Label = "SQLitePCL.Ext.Android.Test", MainLauncher = true)]
-	public class MainActivity : TestSuiteActivity
-	{
-		protected override void OnCreate (Bundle bundle)
-		{
-			// tests can be inside the main assembly
-			AddTest (Assembly.GetExecutingAssembly ());
-			// or in any reference assemblies
-			// AddTest (typeof (Your.Library.TestClass).Assembly);
+    using System.Reflection;
+    using Xamarin.Android.NUnitLite;
 
-			// Once you called base.OnCreate(), you cannot add more assemblies.
-			base.OnCreate (bundle);
-		}
-	}
+    [Activity(Label = "SQLitePCL.Ext.Android.Test", MainLauncher = true)]
+    public class MainActivity : TestSuiteActivity
+    {
+        protected override void OnCreate(Bundle bundle)
+        {
+            // tests can be inside the main assembly
+            // or in any reference assemblies
+            // AddTest (typeof (Your.Library.TestClass).Assembly);
+            this.AddTest(Assembly.GetExecutingAssembly());
+
+            // Once you called base.OnCreate(), you cannot add more assemblies.
+            base.OnCreate(bundle);
+        }
+    }
 }
-

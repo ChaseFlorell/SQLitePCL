@@ -9,21 +9,21 @@
 
 namespace SQLitePCL.Ext.Android.Test
 {
-	using NUnit.Framework;
-	using TestClassAttribute = NUnit.Framework.TestFixtureAttribute;
-	using TestMethodAttribute = NUnit.Framework.TestAttribute;
     using System;
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text;
+    using NUnit.Framework;
+    using TestClassAttribute = NUnit.Framework.TestFixtureAttribute;
+    using TestMethodAttribute = NUnit.Framework.TestAttribute;
 
     [TestClass]
     public class GeneralUnitTest
     {
-	    private static string databasePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "test.db");
-	    private Random rnd;
+        private static string databasePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "test.db");
+        private Random rnd;
         private CultureInfo invClt;
 
         public GeneralUnitTest()
@@ -41,7 +41,7 @@ namespace SQLitePCL.Ext.Android.Test
         }
 
         [TestMethod]
-		[ExpectedException(typeof(SQLiteException))]
+        [ExpectedException(typeof(SQLiteException))]
         public void TestInvalidCharacterConnection()
         {
             using (var connection = new SQLiteConnection(".#|-_$%\\/AN INVALID CONNECTION STRING"))
@@ -96,7 +96,7 @@ namespace SQLitePCL.Ext.Android.Test
         [TestMethod]
         public void TestFullPath()
         {
-			var dbpath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), databasePath);
+            var dbpath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), databasePath);
 
             using (var connection = new SQLiteConnection(dbpath))
             {

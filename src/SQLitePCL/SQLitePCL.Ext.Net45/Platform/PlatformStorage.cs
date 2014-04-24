@@ -14,7 +14,7 @@ namespace SQLitePCL
     /// <summary>
     /// Implements the <see cref="IPlatformStorage"/> interface for .Net45 Framework.
     /// </summary>
-    internal class PlatformStorage : IPlatformStorage
+    internal sealed class PlatformStorage : IPlatformStorage
     {
         /// <summary>
         /// A singleton instance of the <see cref="PlatformStorage"/>.
@@ -28,7 +28,7 @@ namespace SQLitePCL
         /// <summary>
         /// A singleton instance of the <see cref="PlatformStorage"/>.
         /// </summary>
-        public static IPlatformStorage Instance
+        internal static IPlatformStorage Instance
         {
             get
             {

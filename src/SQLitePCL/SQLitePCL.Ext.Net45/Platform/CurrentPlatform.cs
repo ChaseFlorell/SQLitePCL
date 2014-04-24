@@ -12,7 +12,7 @@ namespace SQLitePCL
     /// <summary>
     /// Implements the <see cref="IPlatform"/> interface for .Net45 Framework.
     /// </summary>
-    internal class CurrentPlatform : IPlatform
+    internal sealed class CurrentPlatform : IPlatform
     {
         /// <summary>
         /// Returns a platform-specific implemention of <see cref="IPlatformMarshal"/>.

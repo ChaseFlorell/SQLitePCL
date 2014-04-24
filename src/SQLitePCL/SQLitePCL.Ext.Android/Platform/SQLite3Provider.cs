@@ -13,10 +13,10 @@ namespace SQLitePCL
     using System.Runtime.InteropServices;
 
     /// <summary>
-    /// Implements the <see cref="ISQLite3Provider"/> interface for .Net45 Framework.
+    /// Implements the <see cref="ISQLite3Provider"/> interface for Xamarin Android.
     /// </summary>
-    [Android.Runtime.Preserve(AllMembers=true)]
-    public sealed class SQLite3Provider : ISQLite3Provider
+    [Android.Runtime.Preserve(AllMembers = true)]
+    internal sealed class SQLite3Provider : ISQLite3Provider
     {
         /// <summary>
         /// A singleton instance of the <see cref="SQLite3Provider"/>.
@@ -30,7 +30,7 @@ namespace SQLitePCL
         /// <summary>
         /// A singleton instance of the <see cref="SQLite3Provider"/>.
         /// </summary>
-        public static ISQLite3Provider Instance
+        internal static ISQLite3Provider Instance
         {
             get
             {

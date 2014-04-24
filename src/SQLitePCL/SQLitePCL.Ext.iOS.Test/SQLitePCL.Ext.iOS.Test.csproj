@@ -8,9 +8,9 @@
     <ProjectGuid>{7B514EE4-88BE-43F4-8794-79312105562A}</ProjectGuid>
     <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
-    <RootNamespace>SQLitePCL.Ext.iOS.Test</RootNamespace>
+    <RootNamespace>SQLitePCL.Ext.IOS.Test</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <AssemblyName>SQLitePCLExtiOSTest</AssemblyName>
+    <AssemblyName>SQLitePCLExtIOSTest</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
     <DebugSymbols>true</DebugSymbols>

@@ -9,13 +9,13 @@
 
 namespace SQLitePCL.Ext.WindowsPhone8.Test
 {
-    using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
     using System;
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text;
+    using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
     using Windows.Storage;
 
     [TestClass]
