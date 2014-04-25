@@ -107,7 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <SDKReference Include="MSTestFramework, Version=11.0" />
-    <SDKReference Include="SQLite.WP80, Version=3.8.4.2">
+    <SDKReference Include="SQLite.WP80, Version=3.8.4.3">
       <Name>SQLite for Windows Phone</Name>
     </SDKReference>
     <SDKReference Include="TestPlatform, Version=11.0" />
