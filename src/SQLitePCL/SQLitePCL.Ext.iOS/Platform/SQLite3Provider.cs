@@ -11,6 +11,7 @@ namespace SQLitePCL
 {
     using System;
     using System.Runtime.InteropServices;
+    using MonoTouch;
 
     /// <summary>
     /// Implements the <see cref="ISQLite3Provider"/> interface for Xamarin iOS.
@@ -57,14 +58,56 @@ namespace SQLitePCL
             return NativeMethods.sqlite3_errmsg(db);
         }
 
+        [MonoPInvokeCallback(typeof(FunctionNativeCdecl))]
+        public static void FunctionNativeCdeclProxy(IntPtr context, int val, IntPtr[] arguments)
+        {
+            // Fetch the "pApp" value that was passed to sqlite3_create_function
+            var gcHandlePtr = NativeMethods.sqlite3_user_data(context);
+            var proxy = Sqlite3FunctionMarshallingProxy.FromIntPtr(gcHandlePtr);
+
+            // Invoke it
+            proxy.Invoke(context, val, arguments);
+        }
+
+        [MonoPInvokeCallback(typeof(AggregateStepNativeCdecl))]
+        public static void AggregateStepNativeCdeclProxy(IntPtr context, int val, IntPtr[] arguments)
+        {
+            // Fetch the "pApp" value that was passed to sqlite3_create_function
+            var gcHandlePtr = NativeMethods.sqlite3_user_data(context);
+            var proxy = Sqlite3FunctionMarshallingProxy.FromIntPtr(gcHandlePtr);
+
+            // Invoke the STEP function
+            proxy.Step(context, val, arguments);
+        }
+
+        [MonoPInvokeCallback(typeof(AggregateFinalNativeCdecl))]
+        private static void AggregateFinalNativeCdeclProxy(IntPtr context)
+        {
+            // Fetch the "pApp" value that was passed to sqlite3_create_function
+            var gcHandlePtr = NativeMethods.sqlite3_user_data(context);
+            var proxy = Sqlite3FunctionMarshallingProxy.FromIntPtr(gcHandlePtr);
+
+            // Invoke the FINAL function
+            proxy.Final(context);
+        }
+
         int ISQLite3Provider.Sqlite3CreateFunction(IntPtr db, IntPtr functionName, int numArg, bool deterministic, IntPtr func)
         {
-            return NativeMethods.sqlite3_create_function(db, functionName, numArg, deterministic ? 0x801 : 1, IntPtr.Zero, func, IntPtr.Zero, IntPtr.Zero);
+            var proxyFunction = Marshal.GetFunctionPointerForDelegate(new FunctionNativeCdecl(FunctionNativeCdeclProxy));
+
+            var userData = new Sqlite3FunctionMarshallingProxy(func);
+
+            return NativeMethods.sqlite3_create_function(db, functionName, numArg, deterministic ? 0x801 : 1, userData.ToIntPtr(), proxyFunction, IntPtr.Zero, IntPtr.Zero);
         }
 
         int ISQLite3Provider.Sqlite3CreateAggregate(IntPtr db, IntPtr aggregateName, int numArg, IntPtr step, IntPtr final)
         {
-            return NativeMethods.sqlite3_create_function(db, aggregateName, numArg, 1, IntPtr.Zero, IntPtr.Zero, step, final);
+            var proxyStep = Marshal.GetFunctionPointerForDelegate(new FunctionNativeCdecl(AggregateStepNativeCdeclProxy));
+            var proxyFinal = Marshal.GetFunctionPointerForDelegate(new AggregateFinalNativeCdecl(AggregateFinalNativeCdeclProxy));
+
+            var userData = new Sqlite3FunctionMarshallingProxy(step, final);
+
+            return NativeMethods.sqlite3_create_function(db, aggregateName, numArg, 1, userData.ToIntPtr(), IntPtr.Zero, proxyStep, proxyFinal);
         }
 
         int ISQLite3Provider.Sqlite3BindInt(IntPtr stm, int paramIndex, int value)
@@ -289,6 +332,9 @@ namespace SQLitePCL
             [DllImport("sqlite3", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_create_function")]
             internal static extern int sqlite3_create_function(IntPtr db, IntPtr functionName, int nArg, int p, IntPtr intPtr1, IntPtr func, IntPtr intPtr2, IntPtr intPtr3);
 
+            [DllImport("sqlite3", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_user_data")]
+            internal static extern IntPtr sqlite3_user_data(IntPtr context);
+    
             [DllImport("sqlite3", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_bind_int")]
             internal static extern int sqlite3_bind_int(IntPtr stmHandle, int iParam, int value);
 
