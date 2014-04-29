@@ -102,7 +102,7 @@ namespace SQLitePCL
 
         int ISQLite3Provider.Sqlite3CreateAggregate(IntPtr db, IntPtr aggregateName, int numArg, IntPtr step, IntPtr final)
         {
-            var proxyStep = Marshal.GetFunctionPointerForDelegate(new FunctionNativeCdecl(AggregateStepNativeCdeclProxy));
+            var proxyStep = Marshal.GetFunctionPointerForDelegate(new AggregateStepNativeCdecl(AggregateStepNativeCdeclProxy));
             var proxyFinal = Marshal.GetFunctionPointerForDelegate(new AggregateFinalNativeCdecl(AggregateFinalNativeCdeclProxy));
 
             var userData = new Sqlite3FunctionMarshallingProxy(step, final);
