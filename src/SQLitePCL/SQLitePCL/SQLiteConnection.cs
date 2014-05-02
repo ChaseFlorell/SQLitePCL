@@ -276,6 +276,24 @@ namespace SQLitePCL
             }
         }
 
+        public long LastInsertRowId()
+        {
+            try
+            {
+                var lastId = this.sqlite3Provider.Sqlite3LastInsertRowId(this.db);
+
+                return lastId;
+            }
+            catch (SQLiteException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new SQLiteException("Unable to retrieve the last inserted row id.", ex);
+            }
+        }
+
         public void Dispose()
         {
             this.Dispose(true);

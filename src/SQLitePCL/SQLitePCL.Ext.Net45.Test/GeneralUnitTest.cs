@@ -273,6 +273,42 @@ namespace SQLitePCL.Ext.Net45.Test
         }
 
         [TestMethod]
+        public void TestLastInsertRowId()
+        {
+            using (var connection = new SQLiteConnection("test.db"))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestLastInsertedRowId;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestLastInsertedRowId (id INTEGER PRIMARY KEY AUTOINCREMENT, desc TEXT);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestLastInsertedRowId (desc) VALUES (@desc);"))
+                {
+                    statement.Bind("@desc", "Desc 1");
+
+                    statement.Step();
+
+                    statement.Reset();
+                    statement.ClearBindings();
+                }
+
+	            var lastId = connection.LastInsertRowId();
+
+				Assert.AreEqual(1, lastId);
+
+                using (var statement = connection.Prepare("DROP TABLE TestLastInsertedRowId;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
         public void TestFunction()
         {
             using (var connection = new SQLiteConnection("test.db"))

@@ -27,5 +27,7 @@ namespace SQLitePCL
         void CreateAggregate(string name, int numberOfArguments, AggregateStep step, AggregateFinal final);
 
         string ErrorMessage();
+        
+        long LastInsertRowId();
     }
 }

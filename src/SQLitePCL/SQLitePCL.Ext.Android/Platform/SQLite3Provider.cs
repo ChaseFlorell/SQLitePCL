@@ -272,6 +272,11 @@ namespace SQLitePCL
         {
             return NativeMethods.sqlite3_aggregate_context(context, length);
         }
+		
+        long ISQLite3Provider.Sqlite3LastInsertRowId(IntPtr db)
+        {
+            return NativeMethods.sqlite3_last_insert_rowid(db);
+        }
 
         private static class NativeMethods
         {
@@ -412,6 +417,9 @@ namespace SQLitePCL
 
             [DllImport("sqlite3", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_aggregate_context")]
             internal static extern IntPtr sqlite3_aggregate_context(IntPtr context, int length);
+
+            [DllImport("sqlite3", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_last_insert_rowid")]
+            internal static extern long sqlite3_last_insert_rowid(IntPtr db);
         }
     }
 }

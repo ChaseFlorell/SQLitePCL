@@ -283,5 +283,10 @@ namespace SQLitePCL
         {
             return new IntPtr(SQLite3RuntimeProvider.sqlite3_aggregate_context(context.ToInt64(), length));
         }
+
+        long ISQLite3Provider.Sqlite3LastInsertRowId(IntPtr db)
+        {
+            return SQLite3RuntimeProvider.sqlite3_last_insert_rowid(db.ToInt64());
+        }
     }
 }
