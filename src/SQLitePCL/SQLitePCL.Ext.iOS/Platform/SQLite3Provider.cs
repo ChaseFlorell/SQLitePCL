@@ -458,5 +458,54 @@ namespace SQLitePCL
             [DllImport("sqlite3", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_aggregate_context")]
             internal static extern IntPtr sqlite3_aggregate_context(IntPtr context, int length);
         }
+
+        // unwrap the result of MarshalDelegateToNativeFunctionPointer as we are
+        // not going to be using this pointer, but rather the pointer to this 
+        // object, which will contain the references to the function that the 
+        // current pointer points to.
+        internal struct Sqlite3FunctionMarshallingProxy
+        {
+            // functions
+            public readonly FunctionNativeCdecl Invoke;
+
+            // aggregates
+            public readonly AggregateStepNativeCdecl Step;
+            public readonly AggregateFinalNativeCdecl Final;
+
+            public Sqlite3FunctionMarshallingProxy(IntPtr invoke)
+            {
+                var invokeFunction = GCHandle.FromIntPtr(invoke);
+                Invoke = invokeFunction.Target as FunctionNativeCdecl;
+                invokeFunction.Free();
+
+                Step = null;
+                Final = null;
+            }
+
+            public Sqlite3FunctionMarshallingProxy(IntPtr step, IntPtr final)
+            {
+                var stepFunction = GCHandle.FromIntPtr(step);
+                Step = stepFunction.Target as AggregateStepNativeCdecl;
+                stepFunction.Free();
+
+                var finalFunction = GCHandle.FromIntPtr(final);
+                Final = finalFunction.Target as AggregateFinalNativeCdecl;
+                finalFunction.Free();
+
+                Invoke = null;
+            }
+
+            public IntPtr ToIntPtr()
+            {
+                // TODO: this allocates a new GC handle that needs to be freed somewhere...
+                return GCHandle.ToIntPtr(GCHandle.Alloc(this));
+            }
+
+            public static Sqlite3FunctionMarshallingProxy FromIntPtr(IntPtr gcHandleIntPtr)
+            {
+                GCHandle gcHandle = GCHandle.FromIntPtr(gcHandleIntPtr);
+                return (Sqlite3FunctionMarshallingProxy)gcHandle.Target;
+            }
+        }
     }
 }
