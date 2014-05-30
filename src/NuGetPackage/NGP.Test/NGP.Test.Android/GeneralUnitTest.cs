@@ -23,7 +23,8 @@ namespace NGP.Test.Android
     [TestClass]
     public class GeneralUnitTest
     {
-        private static string databasePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "test.db");
+        private string databaseRelativePath = "test.db";
+        private string databaseFullPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "test.db");
         private Random rnd;
         private CultureInfo invClt;
 
@@ -36,7 +37,7 @@ namespace NGP.Test.Android
         [TestMethod]
         public void TestValidConnection()
         {
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
             }
         }
@@ -54,7 +55,7 @@ namespace NGP.Test.Android
         [ExpectedException(typeof(SQLiteException))]
         public void TestInvalidPathConnection()
         {
-            using (var connection = new SQLiteConnection("C:\\AN INVALID PATH\\test.db"))
+            using (var connection = new SQLiteConnection("/AN INVALID PATH/test.db"))
             {
             }
         }
@@ -62,7 +63,7 @@ namespace NGP.Test.Android
         [TestMethod]
         public void TestPrepareValidStatement()
         {
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("CREATE TABLE IF NOT EXISTS t(x INTEGER, y TEXT);"))
                 {
@@ -74,7 +75,7 @@ namespace NGP.Test.Android
         [ExpectedException(typeof(SQLiteException))]
         public void TestPrepareInvalidStatement()
         {
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("AN INVALID STATEMENT;"))
                 {
@@ -85,7 +86,7 @@ namespace NGP.Test.Android
         [TestMethod]
         public void TestStepStatement()
         {
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("CREATE TABLE IF NOT EXISTS t(x INTEGER, y TEXT);"))
                 {
@@ -97,9 +98,7 @@ namespace NGP.Test.Android
         [TestMethod]
         public void TestFullPath()
         {
-            var dbpath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), databasePath);
-
-            using (var connection = new SQLiteConnection(dbpath))
+            using (var connection = new SQLiteConnection(this.databaseFullPath))
             {
                 using (var statement = connection.Prepare("CREATE TABLE IF NOT EXISTS t(x INTEGER, y TEXT);"))
                 {
@@ -121,7 +120,7 @@ namespace NGP.Test.Android
                 insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
             }
 
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestQuery;"))
                 {
@@ -189,7 +188,7 @@ namespace NGP.Test.Android
         [TestMethod]
         public void TestColumnName()
         {
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestColumnName;"))
                 {
@@ -220,7 +219,7 @@ namespace NGP.Test.Android
         [TestMethod]
         public void TestColumnDataCount()
         {
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestColumnDataCount;"))
                 {
@@ -278,7 +277,7 @@ namespace NGP.Test.Android
         [TestMethod]
         public void TestFunction()
         {
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 connection.CreateFunction(
                     "CUSTOMFUNCSUM",
@@ -335,7 +334,7 @@ namespace NGP.Test.Android
         [TestMethod]
         public void TestAggregate()
         {
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 connection.CreateAggregate(
                     "CUSTOMAGGSUM",
@@ -407,7 +406,7 @@ namespace NGP.Test.Android
                 insertedRecords.Add(new Tuple<int, long, string, double, byte[]>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal(), this.GetRandomBlob()));
             }
 
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestBindParameter;"))
                 {
@@ -487,7 +486,7 @@ namespace NGP.Test.Android
                 insertedRecords.Add(new Tuple<int, long, string, double, byte[]>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal(), this.GetRandomBlob()));
             }
 
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestBindParameterFilter;"))
                 {
@@ -579,7 +578,7 @@ namespace NGP.Test.Android
                 insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
             }
 
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestParameterBoundInsertConstantQueryFilter;"))
                 {
@@ -662,7 +661,7 @@ namespace NGP.Test.Android
                 insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
             }
 
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestConstantInsertParameterBoundQueryFilter;"))
                 {

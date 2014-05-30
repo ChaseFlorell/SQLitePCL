@@ -54,7 +54,7 @@ namespace SQLitePCL.Ext.Android.Test
         [ExpectedException(typeof(SQLiteException))]
         public void TestInvalidPathConnection()
         {
-            using (var connection = new SQLiteConnection("C:\\AN INVALID PATH\\test.db"))
+            using (var connection = new SQLiteConnection("/AN INVALID PATH/test.db"))
             {
             }
         }
