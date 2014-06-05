@@ -110,17 +110,17 @@ namespace SQLitePCL
 
         Delegate IPlatformMarshal.ApplyNativeCallingConventionToFunction(FunctionNative function)
         {
-            return new FunctionNativeCdecl((context, numberOfArguments, arguments) => { function.Invoke(context, numberOfArguments, arguments); });
+            return new FunctionNativeCdecl(function);
         }
 
         Delegate IPlatformMarshal.ApplyNativeCallingConventionToAggregateStep(AggregateStepNative step)
         {
-            return new AggregateStepNativeCdecl((context, numberOfArguments, arguments) => { step.Invoke(context, numberOfArguments, arguments); });
+            return new AggregateStepNativeCdecl(step);
         }
 
         Delegate IPlatformMarshal.ApplyNativeCallingConventionToAggregateFinal(AggregateFinalNative final)
         {
-            return new AggregateFinalNativeCdecl((context) => { final.Invoke(context); });
+            return new AggregateFinalNativeCdecl(final);
         }
 
         IntPtr IPlatformMarshal.MarshalDelegateToNativeFunctionPointer(Delegate del)
