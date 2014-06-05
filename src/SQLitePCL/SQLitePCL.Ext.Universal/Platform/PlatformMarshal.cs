@@ -23,7 +23,7 @@ namespace SQLitePCL
     internal delegate void AggregateFinalNativeCdecl(IntPtr context);
 
     /// <summary>
-    /// Implements the <see cref="IPlatformMarshal"/> interface for Windows Phone 8.
+    /// Implements the <see cref="IPlatformMarshal"/> interface for Windows Store.
     /// </summary>
     internal sealed class PlatformMarshal : IPlatformMarshal
     {
@@ -125,7 +125,7 @@ namespace SQLitePCL
 
         IntPtr IPlatformMarshal.MarshalDelegateToNativeFunctionPointer(Delegate del)
         {
-            return Marshal.GetFunctionPointerForDelegate(del);
+            return Marshal.GetFunctionPointerForDelegate<Delegate>(del);
         }
 
         void IPlatformMarshal.Copy(System.IntPtr source, byte[] destination, int startIndex, int length)
