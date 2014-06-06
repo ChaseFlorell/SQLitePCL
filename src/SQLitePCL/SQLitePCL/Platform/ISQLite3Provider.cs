@@ -22,11 +22,13 @@ namespace SQLitePCL
 
         int Sqlite3PrepareV2(IntPtr db, IntPtr sql, int length, out IntPtr stm, IntPtr tail);
 
-        IntPtr Sqlite3Errmsg(IntPtr db);
-
         int Sqlite3CreateFunction(IntPtr db, IntPtr functionName, int numArg, bool deterministic, IntPtr func);
 
         int Sqlite3CreateAggregate(IntPtr db, IntPtr aggregateName, int numArg, IntPtr step, IntPtr final);
+
+        long Sqlite3LastInsertRowId(IntPtr context);
+
+        IntPtr Sqlite3Errmsg(IntPtr db);
 
         int Sqlite3BindInt(IntPtr stm, int paramIndex, int value);
 
@@ -109,7 +111,5 @@ namespace SQLitePCL
         void Sqlite3ResultError(IntPtr context, IntPtr value, int length);
 
         IntPtr Sqlite3AggregateContext(IntPtr context, int length);
-
-        long Sqlite3LastInsertRowId(IntPtr context);
     }
 }

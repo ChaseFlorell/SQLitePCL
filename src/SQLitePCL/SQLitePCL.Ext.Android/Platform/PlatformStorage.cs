@@ -52,5 +52,13 @@ namespace SQLitePCL
 
             return result;
         }
+
+        /// <summary>
+        /// Returns a platform-specific temporary directory path.
+        /// </summary>
+        string IPlatformStorage.GetTemporaryDirectoryPath()
+        {
+            return Path.GetTempPath();
+        }
     }
 }

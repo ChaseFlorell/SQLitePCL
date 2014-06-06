@@ -21,6 +21,8 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
     [TestClass]
     public class GeneralUnitTest
     {
+        private string databaseRelativePath = "test.db";
+        private string databaseFullPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "test.db");
         private Random rnd;
         private CultureInfo invClt;
 
@@ -33,7 +35,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
         [TestMethod]
         public void TestValidConnection()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
             }
         }
@@ -63,7 +65,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
         [TestMethod]
         public void TestPrepareValidStatement()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("CREATE TABLE IF NOT EXISTS t(x INTEGER, y TEXT);"))
                 {
@@ -76,7 +78,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
         {
             Assert.ThrowsException<SQLiteException>(() =>
             {
-                using (var connection = new SQLiteConnection("test.db"))
+                using (var connection = new SQLiteConnection(this.databaseRelativePath))
                 {
                     using (var statement = connection.Prepare("AN INVALID STATEMENT;"))
                     {
@@ -88,7 +90,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
         [TestMethod]
         public void TestStepStatement()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("CREATE TABLE IF NOT EXISTS t(x INTEGER, y TEXT);"))
                 {
@@ -100,10 +102,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
         [TestMethod]
         public void TestFullPath()
         {
-            var location = ApplicationData.Current.TemporaryFolder.Path;
-            var dbpath = Path.Combine(location, "test.db");
-
-            using (var connection = new SQLiteConnection(dbpath))
+            using (var connection = new SQLiteConnection(this.databaseFullPath))
             {
                 using (var statement = connection.Prepare("CREATE TABLE IF NOT EXISTS t(x INTEGER, y TEXT);"))
                 {
@@ -125,7 +124,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
                 insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
             }
 
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestQuery;"))
                 {
@@ -193,7 +192,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
         [TestMethod]
         public void TestColumnName()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestColumnName;"))
                 {
@@ -224,7 +223,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
         [TestMethod]
         public void TestColumnDataCount()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestColumnDataCount;"))
                 {
@@ -280,9 +279,45 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
         }
 
         [TestMethod]
+        public void TestLastInsertRowId()
+        {
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestLastInsertedRowId;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestLastInsertedRowId (id INTEGER PRIMARY KEY AUTOINCREMENT, desc TEXT);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestLastInsertedRowId (desc) VALUES (@desc);"))
+                {
+                    statement.Bind("@desc", "Desc 1");
+
+                    statement.Step();
+
+                    statement.Reset();
+                    statement.ClearBindings();
+                }
+
+                var lastId = connection.LastInsertRowId();
+
+                Assert.AreEqual(1, lastId);
+
+                using (var statement = connection.Prepare("DROP TABLE TestLastInsertedRowId;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
         public void TestFunction()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 connection.CreateFunction(
                     "CUSTOMFUNCSUM",
@@ -290,7 +325,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
                     new Function((arguments) =>
                     {
                         return (long)arguments[0] + (long)arguments[1];
-                    }), 
+                    }),
                     true);
 
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestFunction;"))
@@ -339,7 +374,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
         [TestMethod]
         public void TestAggregate()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 connection.CreateAggregate(
                     "CUSTOMAGGSUM",
@@ -411,7 +446,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
                 insertedRecords.Add(new Tuple<int, long, string, double, byte[]>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal(), this.GetRandomBlob()));
             }
 
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestBindParameter;"))
                 {
@@ -491,7 +526,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
                 insertedRecords.Add(new Tuple<int, long, string, double, byte[]>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal(), this.GetRandomBlob()));
             }
 
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestBindParameterFilter;"))
                 {
@@ -583,7 +618,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
                 insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
             }
 
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestParameterBoundInsertConstantQueryFilter;"))
                 {
@@ -666,7 +701,7 @@ namespace SQLitePCL.Ext.Universal.WindowsStore.Test
                 insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
             }
 
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestConstantInsertParameterBoundQueryFilter;"))
                 {

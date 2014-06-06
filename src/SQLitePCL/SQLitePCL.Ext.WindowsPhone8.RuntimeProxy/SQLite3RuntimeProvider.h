@@ -25,9 +25,11 @@ namespace SQLitePCL
 
 					static int32 sqlite3_prepare_v2(int64 db, int64 zSql, int32 nByte, int64* ppStmpt, int64 pzTail);
 
-					static int64 sqlite3_errmsg(int64 db);
-
 					static int32 sqlite3_create_function(int64 db, int64 zFunctionName, int32 nArg, int32 eTextRep, int64 pApp, int64 xFunc, int64 xStep, int64 xFinal);
+
+					static int64 sqlite3_last_insert_rowid(int64 db);
+
+					static int64 sqlite3_errmsg(int64 db);
 
 					static int32 sqlite3_bind_int(int64 stmHandle, int32 iParam, int32 value);
 
@@ -110,8 +112,6 @@ namespace SQLitePCL
 					static void sqlite3_result_error(int64 context, int64 result, int32 length);
 
 					static int64 sqlite3_aggregate_context(int64 context, int32 length);
-					
-					static int64 sqlite3_last_insert_rowid(int64 db);
 				};
 			}
 		}

@@ -19,5 +19,10 @@ namespace SQLitePCL
         /// Returns a platform-specific local file path.
         /// </summary>
         string GetLocalFilePath(string filename);
+
+        /// <summary>
+        /// Returns a platform-specific temporary directory path.
+        /// </summary>
+        string GetTemporaryDirectoryPath();
     }
 }

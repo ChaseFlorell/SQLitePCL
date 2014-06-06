@@ -64,11 +64,6 @@ namespace SQLitePCL
             return result;
         }
 
-        IntPtr ISQLite3Provider.Sqlite3Errmsg(IntPtr db)
-        {
-            return new IntPtr(SQLite3RuntimeProvider.sqlite3_errmsg(db.ToInt64()));
-        }
-
         int ISQLite3Provider.Sqlite3CreateFunction(IntPtr db, IntPtr functionName, int numArg, bool deterministic, IntPtr func)
         {
             return SQLite3RuntimeProvider.sqlite3_create_function(db.ToInt64(), functionName.ToInt64(), numArg, deterministic ? 0x801 : 1, IntPtr.Zero.ToInt64(), func.ToInt64(), IntPtr.Zero.ToInt64(), IntPtr.Zero.ToInt64());
@@ -77,6 +72,16 @@ namespace SQLitePCL
         int ISQLite3Provider.Sqlite3CreateAggregate(IntPtr db, IntPtr aggregateName, int numArg, IntPtr step, IntPtr final)
         {
             return SQLite3RuntimeProvider.sqlite3_create_function(db.ToInt64(), aggregateName.ToInt64(), numArg, 1, IntPtr.Zero.ToInt64(), IntPtr.Zero.ToInt64(), step.ToInt64(), final.ToInt64());
+        }
+
+        long ISQLite3Provider.Sqlite3LastInsertRowId(IntPtr db)
+        {
+            return SQLite3RuntimeProvider.sqlite3_last_insert_rowid(db.ToInt64());
+        }
+
+        IntPtr ISQLite3Provider.Sqlite3Errmsg(IntPtr db)
+        {
+            return new IntPtr(SQLite3RuntimeProvider.sqlite3_errmsg(db.ToInt64()));
         }
 
         int ISQLite3Provider.Sqlite3BindInt(IntPtr stm, int paramIndex, int value)
@@ -282,11 +287,6 @@ namespace SQLitePCL
         IntPtr ISQLite3Provider.Sqlite3AggregateContext(IntPtr context, int length)
         {
             return new IntPtr(SQLite3RuntimeProvider.sqlite3_aggregate_context(context.ToInt64(), length));
-        }
-
-        long ISQLite3Provider.Sqlite3LastInsertRowId(IntPtr db)
-        {
-            return SQLite3RuntimeProvider.sqlite3_last_insert_rowid(db.ToInt64());
         }
     }
 }
