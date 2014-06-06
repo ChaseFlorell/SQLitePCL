@@ -110,6 +110,8 @@ namespace SQLitePCL
 					static void sqlite3_result_error(int64 context, int64 result, int32 length);
 
 					static int64 sqlite3_aggregate_context(int64 context, int32 length);
+					
+					static int64 sqlite3_last_insert_rowid(int64 db);
 				};
 			}
 		}

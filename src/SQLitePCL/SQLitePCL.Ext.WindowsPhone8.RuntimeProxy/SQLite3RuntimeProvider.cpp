@@ -261,3 +261,8 @@ int64 SQLite3RuntimeProvider::sqlite3_aggregate_context(int64 context, int32 len
 {
 	return (int64)::sqlite3_aggregate_context((sqlite3_context*)context, length);
 }
+
+int64 SQLite3RuntimeProvider::sqlite3_last_insert_rowid(int64 db)
+{
+	return (int64)::sqlite3_last_insert_rowid((sqlite3*)db);
+}
