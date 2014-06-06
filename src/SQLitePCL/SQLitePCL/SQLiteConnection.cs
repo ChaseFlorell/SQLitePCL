@@ -14,6 +14,10 @@ namespace SQLitePCL
 
     public class SQLiteConnection : ISQLiteConnection
     {
+        private static bool temporaryDirectorySet = false;
+
+        private static object syncTDS = new object();
+
         private IPlatformMarshal platformMarshal;
 
         private IPlatformStorage platformStorage;
@@ -59,6 +63,8 @@ namespace SQLitePCL
 
                     throw new SQLiteException("Unable to open the database file: " + fileName);
                 }
+
+                this.SetTemporaryDirectory();
             }
             catch (SQLiteException)
             {
@@ -258,24 +264,6 @@ namespace SQLitePCL
             }
         }
 
-        public string ErrorMessage()
-        {
-            try
-            {
-                var errmsgPtr = this.sqlite3Provider.Sqlite3Errmsg(this.db);
-
-                return this.platformMarshal.MarshalStringNativeUTF8ToManaged(errmsgPtr);
-            }
-            catch (SQLiteException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                throw new SQLiteException("Unable to retrieve the error message.", ex);
-            }
-        }
-
         public long LastInsertRowId()
         {
             try
@@ -291,6 +279,24 @@ namespace SQLitePCL
             catch (Exception ex)
             {
                 throw new SQLiteException("Unable to retrieve the last inserted row id.", ex);
+            }
+        }
+
+        public string ErrorMessage()
+        {
+            try
+            {
+                var errmsgPtr = this.sqlite3Provider.Sqlite3Errmsg(this.db);
+
+                return this.platformMarshal.MarshalStringNativeUTF8ToManaged(errmsgPtr);
+            }
+            catch (SQLiteException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new SQLiteException("Unable to retrieve the error message.", ex);
             }
         }
 
@@ -423,6 +429,34 @@ namespace SQLitePCL
                 if (errorPtr != IntPtr.Zero)
                 {
                     this.platformMarshal.CleanUpStringNativeUTF8(errorPtr);
+                }
+            }
+        }
+
+        private void SetTemporaryDirectory()
+        {
+            lock (SQLiteConnection.syncTDS)
+            {
+                if (!SQLiteConnection.temporaryDirectorySet)
+                {
+                    var temporaryDirectoryPath = this.platformStorage.GetTemporaryDirectoryPath();
+
+                    using (var statement = this.Prepare(string.Format("PRAGMA temp_store_directory = '{0}';", temporaryDirectoryPath)))
+                    {
+                        var result = statement.Step();
+                        if (result != SQLiteResult.DONE)
+                        {
+                            var errmsgPtr = this.sqlite3Provider.Sqlite3Errmsg(this.db);
+
+                            var errmsg = this.platformMarshal.MarshalStringNativeUTF8ToManaged(errmsgPtr);
+
+                            this.sqlite3Provider.Sqlite3CloseV2(this.db);
+
+                            throw new SQLiteException("Unable to set temporary directory: " + temporaryDirectoryPath + " Result: " + result.ToString() + " Details: " + errmsg);
+                        }
+                    }
+
+                    SQLiteConnection.temporaryDirectorySet = true;
                 }
             }
         }

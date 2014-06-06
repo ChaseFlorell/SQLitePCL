@@ -47,14 +47,19 @@ int32 SQLite3RuntimeProvider::sqlite3_prepare_v2(int64 db, int64 zSql, int32 nBy
 	return result;
 }
 
-int64 SQLite3RuntimeProvider::sqlite3_errmsg(int64 db)
-{
-	return (int64)::sqlite3_errmsg((sqlite3*)db);
-}
-
 int32 SQLite3RuntimeProvider::sqlite3_create_function(int64 db, int64 zFunctionName, int32 nArg, int32 eTextRep, int64 pApp, int64 xFunc, int64 xStep, int64 xFinal)
 {
 	return ::sqlite3_create_function((sqlite3*)db, (const char*)zFunctionName, nArg, eTextRep, (void*)pApp, (void(*)(sqlite3_context*, int, sqlite3_value**))xFunc, (void(*)(sqlite3_context*, int, sqlite3_value**))xStep, (void(*)(sqlite3_context*))xFinal);
+}
+
+int64 SQLite3RuntimeProvider::sqlite3_last_insert_rowid(int64 db)
+{
+	return (int64)::sqlite3_last_insert_rowid((sqlite3*)db);
+}
+
+int64 SQLite3RuntimeProvider::sqlite3_errmsg(int64 db)
+{
+	return (int64)::sqlite3_errmsg((sqlite3*)db);
 }
 
 int32 SQLite3RuntimeProvider::sqlite3_bind_int(int64 stmHandle, int32 iParam, int32 value)
@@ -260,9 +265,4 @@ void SQLite3RuntimeProvider::sqlite3_result_error(int64 context, int64 result, i
 int64 SQLite3RuntimeProvider::sqlite3_aggregate_context(int64 context, int32 length)
 {
 	return (int64)::sqlite3_aggregate_context((sqlite3_context*)context, length);
-}
-
-int64 SQLite3RuntimeProvider::sqlite3_last_insert_rowid(int64 db)
-{
-	return (int64)::sqlite3_last_insert_rowid((sqlite3*)db);
 }

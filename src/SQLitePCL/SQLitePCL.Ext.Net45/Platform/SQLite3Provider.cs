@@ -52,11 +52,6 @@ namespace SQLitePCL
             return NativeMethods.sqlite3_prepare_v2(db, sql, length, out stm, tail);
         }
 
-        IntPtr ISQLite3Provider.Sqlite3Errmsg(IntPtr db)
-        {
-            return NativeMethods.sqlite3_errmsg(db);
-        }
-
         int ISQLite3Provider.Sqlite3CreateFunction(IntPtr db, IntPtr functionName, int numArg, bool deterministic, IntPtr func)
         {
             return NativeMethods.sqlite3_create_function(db, functionName, numArg, deterministic ? 0x801 : 1, IntPtr.Zero, func, IntPtr.Zero, IntPtr.Zero);
@@ -65,6 +60,16 @@ namespace SQLitePCL
         int ISQLite3Provider.Sqlite3CreateAggregate(IntPtr db, IntPtr aggregateName, int numArg, IntPtr step, IntPtr final)
         {
             return NativeMethods.sqlite3_create_function(db, aggregateName, numArg, 1, IntPtr.Zero, IntPtr.Zero, step, final);
+        }
+
+        long ISQLite3Provider.Sqlite3LastInsertRowId(IntPtr db)
+        {
+            return NativeMethods.sqlite3_last_insert_rowid(db);
+        }
+
+        IntPtr ISQLite3Provider.Sqlite3Errmsg(IntPtr db)
+        {
+            return NativeMethods.sqlite3_errmsg(db);
         }
 
         int ISQLite3Provider.Sqlite3BindInt(IntPtr stm, int paramIndex, int value)
@@ -272,11 +277,6 @@ namespace SQLitePCL
             return NativeMethods.sqlite3_aggregate_context(context, length);
         }
 
-        long ISQLite3Provider.Sqlite3LastInsertRowId(IntPtr db)
-        {
-            return NativeMethods.sqlite3_last_insert_rowid(db);
-        }
-
         private static class NativeMethods
         {
             [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_open")]
@@ -288,11 +288,14 @@ namespace SQLitePCL
             [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_prepare_v2")]
             internal static extern int sqlite3_prepare_v2(IntPtr db, IntPtr zSql, int nByte, out IntPtr ppStmpt, IntPtr pzTail);
 
-            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_errmsg")]
-            internal static extern IntPtr sqlite3_errmsg(IntPtr db);
-
             [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_create_function")]
             internal static extern int sqlite3_create_function(IntPtr db, IntPtr functionName, int nArg, int p, IntPtr intPtr1, IntPtr func, IntPtr intPtr2, IntPtr intPtr3);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_last_insert_rowid")]
+            internal static extern long sqlite3_last_insert_rowid(IntPtr db);
+
+            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_errmsg")]
+            internal static extern IntPtr sqlite3_errmsg(IntPtr db);
 
             [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_bind_int")]
             internal static extern int sqlite3_bind_int(IntPtr stmHandle, int iParam, int value);
@@ -416,9 +419,6 @@ namespace SQLitePCL
 
             [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_aggregate_context")]
             internal static extern IntPtr sqlite3_aggregate_context(IntPtr context, int length);
-
-            [DllImport("sqlite3.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_last_insert_rowid")]
-            internal static extern long sqlite3_last_insert_rowid(IntPtr db);
         }
     }
 }

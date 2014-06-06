@@ -276,7 +276,7 @@ namespace SQLitePCL.Ext.Android.Test
         [TestMethod]
         public void TestLastInsertRowId()
         {
-            using (var connection = new SQLiteConnection(databasePath))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestLastInsertedRowId;"))
                 {
@@ -298,9 +298,9 @@ namespace SQLitePCL.Ext.Android.Test
                     statement.ClearBindings();
                 }
 
-	            var lastId = connection.LastInsertRowId();
+                var lastId = connection.LastInsertRowId();
 
-				Assert.AreEqual(1, lastId);
+                Assert.AreEqual(1, lastId);
 
                 using (var statement = connection.Prepare("DROP TABLE TestLastInsertedRowId;"))
                 {
