@@ -97,6 +97,11 @@ namespace SQLitePCL
             }
         }
 
+        public SQLiteType ColumnType(int index)
+        {
+            return (SQLiteType)this.sqlite3Provider.Sqlite3ColumnType(this.stm, index);
+        }
+
         public SQLiteResult Step()
         {
             return (SQLiteResult)this.sqlite3Provider.Sqlite3Step(this.stm);

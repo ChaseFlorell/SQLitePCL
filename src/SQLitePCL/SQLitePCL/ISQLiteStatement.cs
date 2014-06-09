@@ -21,6 +21,8 @@ namespace SQLitePCL
 
         object this[int index] { get; }
 
+        SQLiteType ColumnType(int index);
+
         SQLiteResult Step();
 
         string ColumnName(int index);
