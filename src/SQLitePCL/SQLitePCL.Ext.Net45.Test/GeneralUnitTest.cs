@@ -361,30 +361,30 @@ namespace SQLitePCL.Ext.Net45.Test
         }
 
         [TestMethod]
-        public void TestFunction()
+        public void TestFunctionLambda()
         {
             using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 connection.CreateFunction(
-                    "CUSTOMFUNCSUM",
+                    "CUSTOMFUNCSUMLAMBDA",
                     2,
-                    new Function((arguments) =>
+                    (arguments) =>
                     {
                         return (long)arguments[0] + (long)arguments[1];
-                    }),
+                    },
                     true);
 
-                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestFunction;"))
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestFunctionLambda;"))
                 {
                     statement.Step();
                 }
 
-                using (var statement = connection.Prepare("CREATE TABLE TestFunction(id INTEGER, a INTEGER, b INTEGER);"))
+                using (var statement = connection.Prepare("CREATE TABLE TestFunctionLambda(id INTEGER, a INTEGER, b INTEGER);"))
                 {
                     statement.Step();
                 }
 
-                using (var statement = connection.Prepare("INSERT INTO TestFunction(id, a, b) VALUES(@id, @a, @b);"))
+                using (var statement = connection.Prepare("INSERT INTO TestFunctionLambda(id, a, b) VALUES(@id, @a, @b);"))
                 {
                     for (var value = 0; value < 10; value++)
                     {
@@ -399,7 +399,7 @@ namespace SQLitePCL.Ext.Net45.Test
                     }
                 }
 
-                using (var statement = connection.Prepare("SELECT id, CUSTOMFUNCSUM(a, b) / 2 AS CustomResult FROM TestFunction ORDER BY id ASC;"))
+                using (var statement = connection.Prepare("SELECT id, CUSTOMFUNCSUMLAMBDA(a, b) / 2 AS CustomResult FROM TestFunctionLambda ORDER BY id ASC;"))
                 {
                     while (statement.Step() == SQLiteResult.ROW)
                     {
@@ -410,7 +410,115 @@ namespace SQLitePCL.Ext.Net45.Test
                     }
                 }
 
-                using (var statement = connection.Prepare("DROP TABLE TestFunction;"))
+                using (var statement = connection.Prepare("DROP TABLE TestFunctionLambda;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void TestFunctionInstance()
+        {
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
+            {
+                connection.CreateFunction(
+                    "CUSTOMFUNCSUMINSTANCE",
+                    2,
+                    this.InstanceFunction,
+                    true);
+
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestFunctionInstance;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestFunctionInstance(id INTEGER, a INTEGER, b INTEGER);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestFunctionInstance(id, a, b) VALUES(@id, @a, @b);"))
+                {
+                    for (var value = 0; value < 10; value++)
+                    {
+                        statement.Bind(1, value);
+                        statement.Bind("@a", value - 1);
+                        statement.Bind("@b", value + 1);
+
+                        statement.Step();
+
+                        statement.Reset();
+                        statement.ClearBindings();
+                    }
+                }
+
+                using (var statement = connection.Prepare("SELECT id, CUSTOMFUNCSUMINSTANCE(a, b) / 2 AS CustomResult FROM TestFunctionInstance ORDER BY id ASC;"))
+                {
+                    while (statement.Step() == SQLiteResult.ROW)
+                    {
+                        var id = (long)statement[0];
+                        var customResult = (long)statement[1];
+
+                        Assert.AreEqual(id, customResult);
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestFunctionInstance;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void TestFunctionStatic()
+        {
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
+            {
+                connection.CreateFunction(
+                    "CUSTOMFUNCSUMSTATIC",
+                    2,
+                    GeneralUnitTest.StaticFunction,
+                    true);
+
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestFunctionStatic;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestFunctionStatic(id INTEGER, a INTEGER, b INTEGER);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestFunctionStatic(id, a, b) VALUES(@id, @a, @b);"))
+                {
+                    for (var value = 0; value < 10; value++)
+                    {
+                        statement.Bind(1, value);
+                        statement.Bind("@a", value - 1);
+                        statement.Bind("@b", value + 1);
+
+                        statement.Step();
+
+                        statement.Reset();
+                        statement.ClearBindings();
+                    }
+                }
+
+                using (var statement = connection.Prepare("SELECT id, CUSTOMFUNCSUMSTATIC(a, b) / 2 AS CustomResult FROM TestFunctionStatic ORDER BY id ASC;"))
+                {
+                    while (statement.Step() == SQLiteResult.ROW)
+                    {
+                        var id = (long)statement[0];
+                        var customResult = (long)statement[1];
+
+                        Assert.AreEqual(id, customResult);
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestFunctionStatic;"))
                 {
                     statement.Step();
                 }
@@ -814,6 +922,18 @@ namespace SQLitePCL.Ext.Net45.Test
                 Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
                 Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) <= Math.Abs(insertedRecord.Item4 * 0.0000001));
             }
+        }
+
+        private static object StaticFunction(object[] arguments)
+        {
+            return (long)arguments[0] + (long)arguments[1];
+        }
+
+        private object InstanceFunction(object[] arguments)
+        {
+            var instanceVar = this.databaseFullPath ?? string.Empty;
+            var zero = (long)instanceVar.Length - (long)instanceVar.Length;
+            return (long)arguments[0] + (long)arguments[1] + zero;
         }
 
         private long GetRandomInteger()
