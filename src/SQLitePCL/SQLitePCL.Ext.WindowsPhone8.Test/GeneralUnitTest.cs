@@ -315,6 +315,59 @@ namespace SQLitePCL.Ext.WindowsPhone8.Test
         }
 
         [TestMethod]
+        public void TestColumnType()
+        {
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestColumnType;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestColumnType(id INTEGER, i INTEGER, t TEXT, r REAL, b BLOB, n);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestColumnType(id, i, t, r, b) VALUES(@id,@i,@t,@r,@b);"))
+                {
+                    statement.Bind(1, 0);
+                    statement.Bind("@i", this.GetRandomInteger());
+                    statement.Bind(3, this.GetRandomString());
+                    statement.Bind("@r", this.GetRandomReal());
+                    statement.Bind(5, this.GetRandomBlob());
+
+                    statement.Step();
+
+                    statement.Reset();
+                    statement.ClearBindings();
+                }
+
+                using (var statement = connection.Prepare("SELECT id, i, t, r, b, n FROM TestColumnType ORDER BY id ASC;"))
+                {
+                    statement.Step();
+
+                    var integerType = statement.ColumnType(1);
+                    var textType = statement.ColumnType(2);
+                    var floatType = statement.ColumnType(3);
+                    var blobType = statement.ColumnType(4);
+                    var nullType = statement.ColumnType(5);
+
+                    Assert.AreEqual(SQLiteType.INTEGER, integerType);
+                    Assert.AreEqual(SQLiteType.TEXT, textType);
+                    Assert.AreEqual(SQLiteType.FLOAT, floatType);
+                    Assert.AreEqual(SQLiteType.BLOB, blobType);
+                    Assert.AreEqual(SQLiteType.NULL, nullType);
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestColumnType;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
         public void TestFunction()
         {
             using (var connection = new SQLiteConnection(this.databaseRelativePath))
