@@ -50,7 +50,7 @@ namespace SQLitePCL
             {
                 if (this.sqlite3Provider.Sqlite3Open(fileNamePtr, out this.db) != (int)SQLiteResult.OK)
                 {
-                    if (this.db != null && this.db != IntPtr.Zero)
+                    if (this.db != IntPtr.Zero)
                     {
                         var errmsgPtr = this.sqlite3Provider.Sqlite3Errmsg(this.db);
 
@@ -377,8 +377,6 @@ namespace SQLitePCL
             }
             else
             {
-                var type = result.GetType();
-
                 if (result is int)
                 {
                     this.sqlite3Provider.Sqlite3ResultInt(context, (int)result);

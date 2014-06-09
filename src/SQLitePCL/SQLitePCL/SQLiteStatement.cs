@@ -17,8 +17,6 @@ namespace SQLitePCL
     {
         private IPlatformMarshal platformMarshal;
 
-        private IPlatformStorage platformStorage;
-
         private ISQLite3Provider sqlite3Provider;
 
         private SQLiteConnection connection;
@@ -30,7 +28,6 @@ namespace SQLitePCL
         internal SQLiteStatement(SQLiteConnection connection, IntPtr stm)
         {
             this.platformMarshal = Platform.Instance.PlatformMarshal;
-            this.platformStorage = Platform.Instance.PlatformStorage;
             this.sqlite3Provider = Platform.Instance.SQLite3Provider;
 
             this.connection = connection;
@@ -129,8 +126,6 @@ namespace SQLitePCL
             }
             else
             {
-                var type = value.GetType();
-
                 if (value is int)
                 {
                     invokeResult = this.sqlite3Provider.Sqlite3BindInt(this.stm, index, (int)value);
