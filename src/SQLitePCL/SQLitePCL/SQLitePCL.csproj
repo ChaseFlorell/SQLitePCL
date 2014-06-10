@@ -42,6 +42,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\ISQLiteStatementExtensions.cs" />
     <Compile Include="Platform\IPlatformMarshal.cs" />
     <Compile Include="Platform\IPlatformStorage.cs" />
     <Compile Include="Platform\ISQLite3Provider.cs" />
@@ -61,6 +62,7 @@
     <Compile Include="SQLiteException.cs" />
     <Compile Include="SQLiteResult.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
