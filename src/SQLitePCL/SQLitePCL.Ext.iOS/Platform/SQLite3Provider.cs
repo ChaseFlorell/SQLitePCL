@@ -10,6 +10,7 @@
 namespace SQLitePCL
 {
     using System;
+    using System.Collections.Generic;
     using System.Runtime.InteropServices;
     using MonoTouch;
 
@@ -45,6 +46,7 @@ namespace SQLitePCL
 
         int ISQLite3Provider.Sqlite3CloseV2(IntPtr db)
         {
+            Sqlite3FunctionMarshallingProxy.ReleaseProxies(db);
             return NativeMethods.sqlite3_close_v2(db);
         }
 
@@ -53,56 +55,23 @@ namespace SQLitePCL
             return NativeMethods.sqlite3_prepare_v2(db, sql, length, out stm, tail);
         }
 
-        [MonoPInvokeCallback(typeof(FunctionNativeCdecl))]
-        public static void FunctionNativeCdeclProxy(IntPtr context, int val, IntPtr[] arguments)
-        {
-            // Fetch the "pApp" value that was passed to sqlite3_create_function
-            var gcHandlePtr = NativeMethods.sqlite3_user_data(context);
-            var proxy = Sqlite3FunctionMarshallingProxy.FromIntPtr(gcHandlePtr);
-
-            // Invoke it
-            proxy.Invoke(context, val, arguments);
-        }
-
-        [MonoPInvokeCallback(typeof(AggregateStepNativeCdecl))]
-        public static void AggregateStepNativeCdeclProxy(IntPtr context, int val, IntPtr[] arguments)
-        {
-            // Fetch the "pApp" value that was passed to sqlite3_create_function
-            var gcHandlePtr = NativeMethods.sqlite3_user_data(context);
-            var proxy = Sqlite3FunctionMarshallingProxy.FromIntPtr(gcHandlePtr);
-
-            // Invoke the STEP function
-            proxy.Step(context, val, arguments);
-        }
-
-        [MonoPInvokeCallback(typeof(AggregateFinalNativeCdecl))]
-        private static void AggregateFinalNativeCdeclProxy(IntPtr context)
-        {
-            // Fetch the "pApp" value that was passed to sqlite3_create_function
-            var gcHandlePtr = NativeMethods.sqlite3_user_data(context);
-            var proxy = Sqlite3FunctionMarshallingProxy.FromIntPtr(gcHandlePtr);
-
-            // Invoke the FINAL function
-            proxy.Final(context);
-        }
-
         int ISQLite3Provider.Sqlite3CreateFunction(IntPtr db, IntPtr functionName, int numArg, bool deterministic, IntPtr func)
         {
-            var proxyFunction = Marshal.GetFunctionPointerForDelegate(new FunctionNativeCdecl(FunctionNativeCdeclProxy));
+            var proxyFunction = Marshal.GetFunctionPointerForDelegate(new FunctionNativeCdecl(Sqlite3FunctionMarshallingProxy.FunctionNativeCdeclProxy));
 
-            var userData = new Sqlite3FunctionMarshallingProxy(func);
+            var userData = new Sqlite3FunctionMarshallingProxy(db, functionName, func).GuidHandlePtr;
 
-            return NativeMethods.sqlite3_create_function(db, functionName, numArg, deterministic ? 0x801 : 1, userData.ToIntPtr(), proxyFunction, IntPtr.Zero, IntPtr.Zero);
+            return NativeMethods.sqlite3_create_function(db, functionName, numArg, deterministic ? 0x801 : 1, userData, proxyFunction, IntPtr.Zero, IntPtr.Zero);
         }
 
         int ISQLite3Provider.Sqlite3CreateAggregate(IntPtr db, IntPtr aggregateName, int numArg, IntPtr step, IntPtr final)
         {
-            var proxyStep = Marshal.GetFunctionPointerForDelegate(new AggregateStepNativeCdecl(AggregateStepNativeCdeclProxy));
-            var proxyFinal = Marshal.GetFunctionPointerForDelegate(new AggregateFinalNativeCdecl(AggregateFinalNativeCdeclProxy));
+            var proxyStep = Marshal.GetFunctionPointerForDelegate(new AggregateStepNativeCdecl(Sqlite3FunctionMarshallingProxy.AggregateStepNativeCdeclProxy));
+            var proxyFinal = Marshal.GetFunctionPointerForDelegate(new AggregateFinalNativeCdecl(Sqlite3FunctionMarshallingProxy.AggregateFinalNativeCdeclProxy));
 
-            var userData = new Sqlite3FunctionMarshallingProxy(step, final);
+            var userData = new Sqlite3FunctionMarshallingProxy(db, aggregateName, step, final).GuidHandlePtr;
 
-            return NativeMethods.sqlite3_create_function(db, aggregateName, numArg, 1, userData.ToIntPtr(), IntPtr.Zero, proxyStep, proxyFinal);
+            return NativeMethods.sqlite3_create_function(db, aggregateName, numArg, 1, userData, IntPtr.Zero, proxyStep, proxyFinal);
         }
 
         long ISQLite3Provider.Sqlite3LastInsertRowId(IntPtr db)
@@ -320,6 +289,152 @@ namespace SQLitePCL
             return NativeMethods.sqlite3_aggregate_context(context, length);
         }
 
+        // unwrap the result of MarshalDelegateToNativeFunctionPointer as we are
+        // not going to be using this pointer, but rather the pointer to this 
+        // object, which will contain the references to the function that the 
+        // current pointer points to.
+        private struct Sqlite3FunctionMarshallingProxy
+        {
+            private static IDictionary<Guid, Sqlite3FunctionMarshallingProxy> instanceByGuidDic = new Dictionary<Guid, Sqlite3FunctionMarshallingProxy>();
+
+            private static IDictionary<long, IDictionary<string, Guid>> guidByDbFuncDic = new Dictionary<long, IDictionary<string, Guid>>();
+
+            // functions
+            private readonly FunctionNativeCdecl invoke;
+
+            // aggregates   
+            private readonly AggregateStepNativeCdecl step;
+            private readonly AggregateFinalNativeCdecl final;
+
+            private readonly Guid guid;
+            private readonly GCHandle guidHandle;
+
+            internal Sqlite3FunctionMarshallingProxy(IntPtr db, IntPtr functionName, IntPtr invoke)
+            {
+                var invokeFunction = GCHandle.FromIntPtr(invoke);
+                this.invoke = invokeFunction.Target as FunctionNativeCdecl;
+                invokeFunction.Free();
+
+                this.step = null;
+
+                this.final = null;
+
+                this.guid = Guid.NewGuid();
+                this.guidHandle = GCHandle.Alloc(this.guid, GCHandleType.Pinned);
+
+                this.RegisterInstance(db, functionName);
+            }
+
+            internal Sqlite3FunctionMarshallingProxy(IntPtr db, IntPtr aggregateName, IntPtr step, IntPtr final)
+            {
+                this.invoke = null;
+
+                var stepFunction = GCHandle.FromIntPtr(step);
+                this.step = stepFunction.Target as AggregateStepNativeCdecl;
+                stepFunction.Free();
+
+                var finalFunction = GCHandle.FromIntPtr(final);
+                this.final = finalFunction.Target as AggregateFinalNativeCdecl;
+                finalFunction.Free();
+
+                this.guid = Guid.NewGuid();
+                this.guidHandle = GCHandle.Alloc(this.guid, GCHandleType.Pinned);
+
+                this.RegisterInstance(db, aggregateName);
+            }
+
+            internal IntPtr GuidHandlePtr
+            {
+                get
+                {
+                    return GCHandle.ToIntPtr(this.guidHandle);
+                }
+            }
+
+            [MonoPInvokeCallback(typeof(FunctionNativeCdecl))]
+            internal static void FunctionNativeCdeclProxy(IntPtr context, int numberOfArguments, IntPtr[] arguments)
+            {
+                // Fetch the "pApp" value that was passed to sqlite3_create_function
+                var guidHandlePtr = NativeMethods.sqlite3_user_data(context);
+                var guidHandle = GCHandle.FromIntPtr(guidHandlePtr);
+                var proxy = Sqlite3FunctionMarshallingProxy.instanceByGuidDic[(Guid)guidHandle.Target];
+
+                // Invoke it
+                proxy.invoke(context, numberOfArguments, arguments);
+            }
+
+            [MonoPInvokeCallback(typeof(AggregateStepNativeCdecl))]
+            internal static void AggregateStepNativeCdeclProxy(IntPtr context, int numberOfArguments, IntPtr[] arguments)
+            {
+                // Fetch the "pApp" value that was passed to sqlite3_create_function
+                var guidHandlePtr = NativeMethods.sqlite3_user_data(context);
+                var guidHandle = GCHandle.FromIntPtr(guidHandlePtr);
+                var proxy = Sqlite3FunctionMarshallingProxy.instanceByGuidDic[(Guid)guidHandle.Target];
+
+                // Invoke the STEP function
+                proxy.step(context, numberOfArguments, arguments);
+            }
+
+            [MonoPInvokeCallback(typeof(AggregateFinalNativeCdecl))]
+            internal static void AggregateFinalNativeCdeclProxy(IntPtr context)
+            {
+                // Fetch the "pApp" value that was passed to sqlite3_create_function
+                var guidHandlePtr = NativeMethods.sqlite3_user_data(context);
+                var guidHandle = GCHandle.FromIntPtr(guidHandlePtr);
+                var proxy = Sqlite3FunctionMarshallingProxy.instanceByGuidDic[(Guid)guidHandle.Target];
+
+                // Invoke the FINAL function
+                proxy.final(context);
+            }
+
+            internal static void ReleaseProxies(IntPtr db)
+            {
+                IDictionary<string, Guid> guidByFunc;
+
+                if (guidByDbFuncDic.TryGetValue(db.ToInt64(), out guidByFunc))
+                {
+                    foreach (var oldGuid in guidByFunc.Values)
+                    {
+                        instanceByGuidDic[oldGuid].guidHandle.Free();
+                        instanceByGuidDic.Remove(oldGuid);
+                    }
+
+                    guidByDbFuncDic.Remove(db.ToInt64());
+                }
+            }
+
+            private void RegisterInstance(IntPtr db, IntPtr functionName)
+            {
+                var funcName = PlatformMarshal.Instance.MarshalStringNativeUTF8ToManaged(functionName);
+
+                IDictionary<string, Guid> guidByFunc;
+
+                if (guidByDbFuncDic.TryGetValue(db.ToInt64(), out guidByFunc))
+                {
+                    Guid oldGuid;
+
+                    if (guidByFunc.TryGetValue(funcName, out oldGuid))
+                    {
+                        instanceByGuidDic[oldGuid].guidHandle.Free();
+                        instanceByGuidDic.Remove(oldGuid);
+                        guidByFunc[funcName] = this.guid;
+                    }
+                    else
+                    {
+                        guidByFunc.Add(funcName, this.guid);
+                    }
+                }
+                else
+                {
+                    guidByFunc = new Dictionary<string, Guid>();
+                    guidByFunc.Add(funcName, this.guid);
+                    guidByDbFuncDic.Add(db.ToInt64(), guidByFunc);
+                }
+
+                instanceByGuidDic.Add(this.guid, this);
+            }
+        }
+
         private static class NativeMethods
         {
             [DllImport("sqlite3", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_open")]
@@ -465,55 +580,6 @@ namespace SQLitePCL
 
             [DllImport("sqlite3", CallingConvention = CallingConvention.Cdecl, EntryPoint = "sqlite3_aggregate_context")]
             internal static extern IntPtr sqlite3_aggregate_context(IntPtr context, int length);
-        }
-
-        // unwrap the result of MarshalDelegateToNativeFunctionPointer as we are
-        // not going to be using this pointer, but rather the pointer to this 
-        // object, which will contain the references to the function that the 
-        // current pointer points to.
-        internal struct Sqlite3FunctionMarshallingProxy
-        {
-            // functions
-            public readonly FunctionNativeCdecl Invoke;
-
-            // aggregates
-            public readonly AggregateStepNativeCdecl Step;
-            public readonly AggregateFinalNativeCdecl Final;
-
-            public Sqlite3FunctionMarshallingProxy(IntPtr invoke)
-            {
-                var invokeFunction = GCHandle.FromIntPtr(invoke);
-                Invoke = invokeFunction.Target as FunctionNativeCdecl;
-                invokeFunction.Free();
-
-                Step = null;
-                Final = null;
-            }
-
-            public Sqlite3FunctionMarshallingProxy(IntPtr step, IntPtr final)
-            {
-                var stepFunction = GCHandle.FromIntPtr(step);
-                Step = stepFunction.Target as AggregateStepNativeCdecl;
-                stepFunction.Free();
-
-                var finalFunction = GCHandle.FromIntPtr(final);
-                Final = finalFunction.Target as AggregateFinalNativeCdecl;
-                finalFunction.Free();
-
-                Invoke = null;
-            }
-
-            public IntPtr ToIntPtr()
-            {
-                // TODO: this allocates a new GC handle that needs to be freed somewhere...
-                return GCHandle.ToIntPtr(GCHandle.Alloc(this));
-            }
-
-            public static Sqlite3FunctionMarshallingProxy FromIntPtr(IntPtr gcHandleIntPtr)
-            {
-                GCHandle gcHandle = GCHandle.FromIntPtr(gcHandleIntPtr);
-                return (Sqlite3FunctionMarshallingProxy)gcHandle.Target;
-            }
         }
     }
 }
