@@ -21,11 +21,33 @@ namespace SQLitePCL
 
         object this[int index] { get; }
 
-        SQLiteType ColumnType(int index);
+        object this[string name] { get; }
+
+        SQLiteType DataType(int index);
+
+        SQLiteType DataType(string name);
+
+        string ColumnName(int index);
+
+        int ColumnIndex(string name);
 
         SQLiteResult Step();
 
-        string ColumnName(int index);
+        long GetInteger(int index);
+
+        long GetInteger(string name);
+
+        double GetFloat(int index);
+
+        double GetFloat(string name);
+
+        string GetText(int index);
+
+        string GetText(string name);
+
+        byte[] GetBlob(int index);
+
+        byte[] GetBlob(string name);
 
         void Reset();
 
