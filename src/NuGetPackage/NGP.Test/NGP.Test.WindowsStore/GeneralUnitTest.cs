@@ -22,6 +22,8 @@ namespace NGP.Test.WindowsStore
     [TestClass]
     public class GeneralUnitTest
     {
+        private string databaseRelativePath = "test.db";
+        private string databaseFullPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "test.db");
         private Random rnd;
         private CultureInfo invClt;
 
@@ -34,7 +36,7 @@ namespace NGP.Test.WindowsStore
         [TestMethod]
         public void TestValidConnection()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
             }
         }
@@ -64,7 +66,7 @@ namespace NGP.Test.WindowsStore
         [TestMethod]
         public void TestPrepareValidStatement()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("CREATE TABLE IF NOT EXISTS t(x INTEGER, y TEXT);"))
                 {
@@ -77,7 +79,7 @@ namespace NGP.Test.WindowsStore
         {
             Assert.ThrowsException<SQLiteException>(() =>
             {
-                using (var connection = new SQLiteConnection("test.db"))
+                using (var connection = new SQLiteConnection(this.databaseRelativePath))
                 {
                     using (var statement = connection.Prepare("AN INVALID STATEMENT;"))
                     {
@@ -89,7 +91,7 @@ namespace NGP.Test.WindowsStore
         [TestMethod]
         public void TestStepStatement()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("CREATE TABLE IF NOT EXISTS t(x INTEGER, y TEXT);"))
                 {
@@ -101,10 +103,7 @@ namespace NGP.Test.WindowsStore
         [TestMethod]
         public void TestFullPath()
         {
-            var location = ApplicationData.Current.TemporaryFolder.Path;
-            var dbpath = Path.Combine(location, "test.db");
-
-            using (var connection = new SQLiteConnection(dbpath))
+            using (var connection = new SQLiteConnection(this.databaseFullPath))
             {
                 using (var statement = connection.Prepare("CREATE TABLE IF NOT EXISTS t(x INTEGER, y TEXT);"))
                 {
@@ -126,7 +125,7 @@ namespace NGP.Test.WindowsStore
                 insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
             }
 
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestQuery;"))
                 {
@@ -192,9 +191,165 @@ namespace NGP.Test.WindowsStore
         }
 
         [TestMethod]
+        public void TestInMemory()
+        {
+            var numRecords = this.rnd.Next(1, 11);
+
+            var insertedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+            var queriedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+
+            for (var i = 0; i < numRecords; i++)
+            {
+                insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
+            }
+
+            using (var connection = new SQLiteConnection(":memory:"))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestInMemory;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestInMemory(id INTEGER, i INTEGER, t TEXT, r REAL);"))
+                {
+                    statement.Step();
+                }
+
+                foreach (var record in insertedRecords)
+                {
+                    var command = "INSERT INTO TestInMemory(id, i, t, r) VALUES(" + record.Item1.ToString(this.invClt) + "," + record.Item2.ToString(this.invClt)
+                        + ",'" + record.Item3 + "'," + record.Item4.ToString(this.invClt) + ");";
+
+                    using (var statement = connection.Prepare(command))
+                    {
+                        statement.Step();
+                    }
+                }
+
+                foreach (var record in insertedRecords)
+                {
+                    var command = "SELECT id, i, t, r FROM TestInMemory WHERE id = " + record.Item1.ToString(this.invClt) + " AND i = " + record.Item2.ToString(this.invClt)
+                        + " AND t = '" + record.Item3 + "' AND r = " + record.Item4.ToString(this.invClt) + ";";
+
+                    using (var statement = connection.Prepare(command))
+                    {
+                        while (statement.Step() == SQLiteResult.ROW)
+                        {
+                            var id = (long)statement[0];
+                            var i = (long)statement[1];
+                            var t = (string)statement[2];
+                            var r = (double)statement[3];
+
+                            queriedRecords.Add(new Tuple<int, long, string, double>((int)id, i, t, r));
+                        }
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestInMemory;"))
+                {
+                    statement.Step();
+                }
+            }
+
+            Assert.AreEqual(insertedRecords.Count, queriedRecords.Count);
+
+            insertedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+            queriedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+
+            for (var i = 0; i < insertedRecords.Count; i++)
+            {
+                var insertedRecord = insertedRecords[i];
+                var queriedRecord = queriedRecords[i];
+
+                Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
+                Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
+                Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) <= Math.Abs(insertedRecord.Item4 * 0.0000001));
+            }
+        }
+
+        [TestMethod]
+        public void TestTemporaryDB()
+        {
+            var numRecords = this.rnd.Next(1, 11);
+
+            var insertedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+            var queriedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+
+            for (var i = 0; i < numRecords; i++)
+            {
+                insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
+            }
+
+            using (var connection = new SQLiteConnection(""))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestTemporaryDB;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestTemporaryDB(id INTEGER, i INTEGER, t TEXT, r REAL);"))
+                {
+                    statement.Step();
+                }
+
+                foreach (var record in insertedRecords)
+                {
+                    var command = "INSERT INTO TestTemporaryDB(id, i, t, r) VALUES(" + record.Item1.ToString(this.invClt) + "," + record.Item2.ToString(this.invClt)
+                        + ",'" + record.Item3 + "'," + record.Item4.ToString(this.invClt) + ");";
+
+                    using (var statement = connection.Prepare(command))
+                    {
+                        statement.Step();
+                    }
+                }
+
+                foreach (var record in insertedRecords)
+                {
+                    var command = "SELECT id, i, t, r FROM TestTemporaryDB WHERE id = " + record.Item1.ToString(this.invClt) + " AND i = " + record.Item2.ToString(this.invClt)
+                        + " AND t = '" + record.Item3 + "' AND r = " + record.Item4.ToString(this.invClt) + ";";
+
+                    using (var statement = connection.Prepare(command))
+                    {
+                        while (statement.Step() == SQLiteResult.ROW)
+                        {
+                            var id = (long)statement[0];
+                            var i = (long)statement[1];
+                            var t = (string)statement[2];
+                            var r = (double)statement[3];
+
+                            queriedRecords.Add(new Tuple<int, long, string, double>((int)id, i, t, r));
+                        }
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestTemporaryDB;"))
+                {
+                    statement.Step();
+                }
+            }
+
+            Assert.AreEqual(insertedRecords.Count, queriedRecords.Count);
+
+            insertedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+            queriedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+
+            for (var i = 0; i < insertedRecords.Count; i++)
+            {
+                var insertedRecord = insertedRecords[i];
+                var queriedRecord = queriedRecords[i];
+
+                Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
+                Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
+                Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) <= Math.Abs(insertedRecord.Item4 * 0.0000001));
+            }
+        }
+
+        [TestMethod]
         public void TestColumnName()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestColumnName;"))
                 {
@@ -223,9 +378,50 @@ namespace NGP.Test.WindowsStore
         }
 
         [TestMethod]
+        public void TestColumnSameName()
+        {
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestColumnSameName;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestColumnSameName(id INTEGER, desc TEXT);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("SELECT id, desc AS descrip, desc, desc, SUM(id), desc \"some name\", desc \"sOmE NaMe\" FROM TestColumnSameName ORDER BY id ASC;"))
+                {
+                    var col0 = statement.ColumnName(0);
+                    var col1 = statement.ColumnName(1);
+                    var index2 = statement.ColumnIndex("desc");
+                    var col3 = statement.ColumnName(3);
+                    var col4 = statement.ColumnName(4);
+                    var index5 = statement.ColumnIndex("some name");
+                    var index6 = statement.ColumnIndex("sOmE NaMe");
+
+                    Assert.AreEqual(col0, "id");
+                    Assert.AreEqual(col1, "descrip");
+                    Assert.AreEqual(index2, 2);
+                    Assert.AreEqual(col3, "desc");
+                    Assert.AreEqual(col4, "SUM(id)");
+                    Assert.AreEqual(index5, 5);
+                    Assert.AreEqual(index6, 6);
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestColumnSameName;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
         public void TestColumnDataCount()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestColumnDataCount;"))
                 {
@@ -281,30 +477,119 @@ namespace NGP.Test.WindowsStore
         }
 
         [TestMethod]
-        public void TestFunction()
+        public void TestLastInsertRowId()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestLastInsertedRowId;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestLastInsertedRowId (id INTEGER PRIMARY KEY AUTOINCREMENT, desc TEXT);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestLastInsertedRowId (desc) VALUES (@desc);"))
+                {
+                    statement.Bind("@desc", "Desc 1");
+
+                    statement.Step();
+
+                    statement.Reset();
+                    statement.ClearBindings();
+                }
+
+                var lastId = connection.LastInsertRowId();
+
+                Assert.AreEqual(1, lastId);
+
+                using (var statement = connection.Prepare("DROP TABLE TestLastInsertedRowId;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void TestDataType()
+        {
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestDataType;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestDataType(id INTEGER, i INTEGER, t TEXT, r REAL, b BLOB, n);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestDataType(id, i, t, r, b) VALUES(@id,@i,@t,@r,@b);"))
+                {
+                    statement.Bind(1, 0);
+                    statement.Bind("@i", this.GetRandomInteger());
+                    statement.Bind(3, this.GetRandomString());
+                    statement.Bind("@r", this.GetRandomReal());
+                    statement.Bind(5, this.GetRandomBlob());
+
+                    statement.Step();
+
+                    statement.Reset();
+                    statement.ClearBindings();
+                }
+
+                using (var statement = connection.Prepare("SELECT id, i, t, r, b, n FROM TestDataType ORDER BY id ASC;"))
+                {
+                    statement.Step();
+
+                    var integerType = statement.DataType(1);
+                    var textType = statement.DataType(2);
+                    var floatType = statement.DataType(3);
+                    var blobType = statement.DataType(4);
+                    var nullType = statement.DataType(5);
+
+                    Assert.AreEqual(SQLiteType.INTEGER, integerType);
+                    Assert.AreEqual(SQLiteType.TEXT, textType);
+                    Assert.AreEqual(SQLiteType.FLOAT, floatType);
+                    Assert.AreEqual(SQLiteType.BLOB, blobType);
+                    Assert.AreEqual(SQLiteType.NULL, nullType);
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestDataType;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void TestFunctionLambda()
+        {
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 connection.CreateFunction(
-                    "CUSTOMFUNCSUM",
+                    "CUSTOMFUNCSUMLAMBDA",
                     2,
-                    new Function((arguments) =>
+                    (arguments) =>
                     {
                         return (long)arguments[0] + (long)arguments[1];
-                    }),
+                    },
                     true);
 
-                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestFunction;"))
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestFunctionLambda;"))
                 {
                     statement.Step();
                 }
 
-                using (var statement = connection.Prepare("CREATE TABLE TestFunction(id INTEGER, a INTEGER, b INTEGER);"))
+                using (var statement = connection.Prepare("CREATE TABLE TestFunctionLambda(id INTEGER, a INTEGER, b INTEGER);"))
                 {
                     statement.Step();
                 }
 
-                using (var statement = connection.Prepare("INSERT INTO TestFunction(id, a, b) VALUES(@id, @a, @b);"))
+                using (var statement = connection.Prepare("INSERT INTO TestFunctionLambda(id, a, b) VALUES(@id, @a, @b);"))
                 {
                     for (var value = 0; value < 10; value++)
                     {
@@ -319,7 +604,7 @@ namespace NGP.Test.WindowsStore
                     }
                 }
 
-                using (var statement = connection.Prepare("SELECT id, CUSTOMFUNCSUM(a, b) / 2 AS CustomResult FROM TestFunction ORDER BY id ASC;"))
+                using (var statement = connection.Prepare("SELECT id, CUSTOMFUNCSUMLAMBDA(a, b) / 2 AS CustomResult FROM TestFunctionLambda ORDER BY id ASC;"))
                 {
                     while (statement.Step() == SQLiteResult.ROW)
                     {
@@ -330,7 +615,115 @@ namespace NGP.Test.WindowsStore
                     }
                 }
 
-                using (var statement = connection.Prepare("DROP TABLE TestFunction;"))
+                using (var statement = connection.Prepare("DROP TABLE TestFunctionLambda;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void TestFunctionInstance()
+        {
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
+            {
+                connection.CreateFunction(
+                    "CUSTOMFUNCSUMINSTANCE",
+                    2,
+                    this.InstanceFunction,
+                    true);
+
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestFunctionInstance;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestFunctionInstance(id INTEGER, a INTEGER, b INTEGER);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestFunctionInstance(id, a, b) VALUES(@id, @a, @b);"))
+                {
+                    for (var value = 0; value < 10; value++)
+                    {
+                        statement.Bind(1, value);
+                        statement.Bind("@a", value - 1);
+                        statement.Bind("@b", value + 1);
+
+                        statement.Step();
+
+                        statement.Reset();
+                        statement.ClearBindings();
+                    }
+                }
+
+                using (var statement = connection.Prepare("SELECT id, CUSTOMFUNCSUMINSTANCE(a, b) / 2 AS CustomResult FROM TestFunctionInstance ORDER BY id ASC;"))
+                {
+                    while (statement.Step() == SQLiteResult.ROW)
+                    {
+                        var id = (long)statement[0];
+                        var customResult = (long)statement[1];
+
+                        Assert.AreEqual(id, customResult);
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestFunctionInstance;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void TestFunctionStatic()
+        {
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
+            {
+                connection.CreateFunction(
+                    "CUSTOMFUNCSUMSTATIC",
+                    2,
+                    GeneralUnitTest.StaticFunction,
+                    true);
+
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestFunctionStatic;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestFunctionStatic(id INTEGER, a INTEGER, b INTEGER);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestFunctionStatic(id, a, b) VALUES(@id, @a, @b);"))
+                {
+                    for (var value = 0; value < 10; value++)
+                    {
+                        statement.Bind(1, value);
+                        statement.Bind("@a", value - 1);
+                        statement.Bind("@b", value + 1);
+
+                        statement.Step();
+
+                        statement.Reset();
+                        statement.ClearBindings();
+                    }
+                }
+
+                using (var statement = connection.Prepare("SELECT id, CUSTOMFUNCSUMSTATIC(a, b) / 2 AS CustomResult FROM TestFunctionStatic ORDER BY id ASC;"))
+                {
+                    while (statement.Step() == SQLiteResult.ROW)
+                    {
+                        var id = (long)statement[0];
+                        var customResult = (long)statement[1];
+
+                        Assert.AreEqual(id, customResult);
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestFunctionStatic;"))
                 {
                     statement.Step();
                 }
@@ -340,7 +733,7 @@ namespace NGP.Test.WindowsStore
         [TestMethod]
         public void TestAggregate()
         {
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 connection.CreateAggregate(
                     "CUSTOMAGGSUM",
@@ -412,7 +805,7 @@ namespace NGP.Test.WindowsStore
                 insertedRecords.Add(new Tuple<int, long, string, double, byte[]>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal(), this.GetRandomBlob()));
             }
 
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestBindParameter;"))
                 {
@@ -480,6 +873,153 @@ namespace NGP.Test.WindowsStore
         }
 
         [TestMethod]
+        public void TestBindPrimitiveTypes()
+        {
+            var numRecords = this.rnd.Next(1, 11);
+
+            var insertedRecords = new List<Tuple<int, byte, sbyte, short, ushort, int, uint, Tuple<long, ulong, char, string, decimal, float, double>>>(numRecords);
+            var queriedRecords = new List<Tuple<int, byte, sbyte, short, ushort, int, uint, Tuple<long, ulong, char, string, decimal, float, double>>>(numRecords);
+
+            for (var i = 0; i < numRecords; i++)
+            {
+                insertedRecords.Add(new Tuple<int, byte, sbyte, short, ushort, int, uint, Tuple<long, ulong, char, string, decimal, float, double>>(
+                    i,
+                    (byte)this.GetRandomInteger(),
+                    (sbyte)this.GetRandomInteger(),
+                    (short)this.GetRandomInteger(),
+                    (ushort)this.GetRandomInteger(),
+                    (int)this.GetRandomInteger(),
+                    (uint)this.GetRandomInteger(),
+                    new Tuple<long, ulong, char, string, decimal, float, double>(
+                        this.GetRandomInteger(),
+                        (ulong)Math.Abs(this.GetRandomInteger()),
+                        this.GetRandomString()[0],
+                        this.GetRandomString(),
+                        (decimal)this.GetRandomReal(),
+                        (float)this.GetRandomReal(),
+                        this.GetRandomReal())));
+            }
+
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestBindPrimitiveTypes;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestBindPrimitiveTypes(id INTEGER, b INTEGER, sb INTEGER, s INTEGER, us INTEGER, i INTEGER, ui INTEGER, l INTEGER, ul INTEGER, c TEXT, st TEXT, m REAL, f REAL, d REAL);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestBindPrimitiveTypes(id, b, sb, s, us, i, ui, l, ul, c, st, m, f, d) VALUES(@id,@b,@sb,@s,@us,@i,@ui,@l,@ul,@c,@st,@m,@f,@d);"))
+                {
+                    foreach (var record in insertedRecords)
+                    {
+                        statement.Bind("@id", record.Item1);
+                        statement.Bind("@b", record.Item2);
+                        statement.Bind("@sb", record.Item3);
+                        statement.Bind("@s", record.Item4);
+                        statement.Bind("@us", record.Item5);
+                        statement.Bind("@i", record.Item6);
+                        statement.Bind("@ui", record.Item7);
+                        statement.Bind("@l", record.Rest.Item1);
+                        statement.Bind("@ul", record.Rest.Item2);
+                        statement.Bind("@c", record.Rest.Item3);
+                        statement.Bind("@st", record.Rest.Item4);
+                        statement.Bind("@m", record.Rest.Item5);
+                        statement.Bind("@f", record.Rest.Item6);
+                        statement.Bind("@d", record.Rest.Item7);
+
+                        statement.Step();
+
+                        statement.Reset();
+                        statement.ClearBindings();
+                    }
+                }
+
+                using (var statement = connection.Prepare("SELECT id, b, sb, s, us, i, ui, l, ul, c, st, m, f, d FROM TestBindPrimitiveTypes ORDER BY id ASC;"))
+                {
+                    while (statement.Step() == SQLiteResult.ROW)
+                    {
+                        var id = (int)statement.GetInteger("id");
+                        var b = (byte)statement.GetInteger("b");
+                        var sb = (sbyte)statement.GetInteger("sb");
+                        var s = (short)statement.GetInteger("s");
+                        var us = (ushort)statement.GetInteger("us");
+                        var i = (int)statement.GetInteger("i");
+                        var ui = (uint)statement.GetInteger("ui");
+                        var l = statement.GetInteger("l");
+                        var ul = (ulong)statement.GetInteger("ul");
+                        var c = statement.GetText("c")[0];
+                        var st = statement.GetText("st");
+                        var m = (decimal)statement.GetFloat("m");
+                        var f = (float)statement.GetFloat("f");
+                        var d = statement.GetFloat("d");
+
+                        queriedRecords.Add(new Tuple<int, byte, sbyte, short, ushort, int, uint, Tuple<long, ulong, char, string, decimal, float, double>>(
+                    id,
+                    b,
+                    sb,
+                    s,
+                    us,
+                    i,
+                    ui,
+                    new Tuple<long, ulong, char, string, decimal, float, double>(
+                        l,
+                        ul,
+                        c,
+                        st,
+                        m,
+                        f,
+                        d)));
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestBindPrimitiveTypes;"))
+                {
+                    statement.Step();
+                }
+            }
+
+            Assert.AreEqual(insertedRecords.Count, queriedRecords.Count);
+
+            insertedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+            queriedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+
+            for (var i = 0; i < insertedRecords.Count; i++)
+            {
+                var insertedRecord = insertedRecords[i];
+                var queriedRecord = queriedRecords[i];
+
+                Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
+                Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
+                Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
+                Assert.AreEqual(insertedRecord.Item4, queriedRecord.Item4);
+                Assert.AreEqual(insertedRecord.Item5, queriedRecord.Item5);
+                Assert.AreEqual(insertedRecord.Item6, queriedRecord.Item6);
+                Assert.AreEqual(insertedRecord.Item7, queriedRecord.Item7);
+                Assert.AreEqual(insertedRecord.Rest.Item1, queriedRecord.Rest.Item1);
+                Assert.AreEqual(insertedRecord.Rest.Item2, queriedRecord.Rest.Item2);
+                Assert.IsTrue(insertedRecord.Rest.Item3 == queriedRecord.Rest.Item3,
+                    "Expected: {0}. Actual {1}.",
+                    insertedRecord.Rest.Item3,
+                    queriedRecord.Rest.Item3);
+                Assert.IsTrue(insertedRecord.Rest.Item4 == queriedRecord.Rest.Item4,
+                    "Expected: {0}. Actual {1}.",
+                    insertedRecord.Rest.Item4,
+                    queriedRecord.Rest.Item4);
+                Assert.IsTrue(Math.Abs(insertedRecord.Rest.Item5 - queriedRecord.Rest.Item5) <= Math.Max(Math.Abs(insertedRecord.Rest.Item5), Math.Abs(queriedRecord.Rest.Item5)) * 0.0000001m,
+                    "Expected: {0}. Actual: {1}. Delta: {2}.",
+                    insertedRecord.Rest.Item5,
+                    queriedRecord.Rest.Item5,
+                    Math.Max(Math.Abs(insertedRecord.Rest.Item5), Math.Abs(queriedRecord.Rest.Item5)) * 0.0000001m);
+                Assert.AreEqual(insertedRecord.Rest.Item6, queriedRecord.Rest.Item6, Math.Max(Math.Abs(insertedRecord.Rest.Item6), Math.Abs(queriedRecord.Rest.Item6)) * 0.0000001f);
+                Assert.AreEqual(insertedRecord.Rest.Item7, queriedRecord.Rest.Item7, Math.Max(Math.Abs(insertedRecord.Rest.Item7), Math.Abs(queriedRecord.Rest.Item7)) * 0.0000001d);
+            }
+        }
+
+        [TestMethod]
         public void TestBindParameterFilter()
         {
             var numRecords = this.rnd.Next(1, 11);
@@ -492,7 +1032,7 @@ namespace NGP.Test.WindowsStore
                 insertedRecords.Add(new Tuple<int, long, string, double, byte[]>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal(), this.GetRandomBlob()));
             }
 
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestBindParameterFilter;"))
                 {
@@ -584,7 +1124,7 @@ namespace NGP.Test.WindowsStore
                 insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
             }
 
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestParameterBoundInsertConstantQueryFilter;"))
                 {
@@ -667,7 +1207,7 @@ namespace NGP.Test.WindowsStore
                 insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
             }
 
-            using (var connection = new SQLiteConnection("test.db"))
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestConstantInsertParameterBoundQueryFilter;"))
                 {
@@ -734,6 +1274,18 @@ namespace NGP.Test.WindowsStore
                 Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
                 Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) <= Math.Abs(insertedRecord.Item4 * 0.0000001));
             }
+        }
+
+        private static object StaticFunction(object[] arguments)
+        {
+            return (long)arguments[0] + (long)arguments[1];
+        }
+
+        private object InstanceFunction(object[] arguments)
+        {
+            var instanceVar = this.databaseFullPath ?? string.Empty;
+            var zero = (long)instanceVar.Length - (long)instanceVar.Length;
+            return (long)arguments[0] + (long)arguments[1] + zero;
         }
 
         private long GetRandomInteger()
