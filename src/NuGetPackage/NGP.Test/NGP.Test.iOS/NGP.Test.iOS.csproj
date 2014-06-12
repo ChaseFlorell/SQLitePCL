@@ -10,7 +10,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>NGP.Test.IOS</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <AssemblyName>NGPTestIOS</AssemblyName>
+    <AssemblyName>NGPTestiOS</AssemblyName>
     <NuGetPackageImportStamp>663cb881</NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
