@@ -190,6 +190,162 @@ namespace SQLitePCL.Ext.WindowsStore.Test
         }
 
         [TestMethod]
+        public void TestInMemory()
+        {
+            var numRecords = this.rnd.Next(1, 11);
+
+            var insertedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+            var queriedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+
+            for (var i = 0; i < numRecords; i++)
+            {
+                insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
+            }
+
+            using (var connection = new SQLiteConnection(":memory:"))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestInMemory;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestInMemory(id INTEGER, i INTEGER, t TEXT, r REAL);"))
+                {
+                    statement.Step();
+                }
+
+                foreach (var record in insertedRecords)
+                {
+                    var command = "INSERT INTO TestInMemory(id, i, t, r) VALUES(" + record.Item1.ToString(this.invClt) + "," + record.Item2.ToString(this.invClt)
+                        + ",'" + record.Item3 + "'," + record.Item4.ToString(this.invClt) + ");";
+
+                    using (var statement = connection.Prepare(command))
+                    {
+                        statement.Step();
+                    }
+                }
+
+                foreach (var record in insertedRecords)
+                {
+                    var command = "SELECT id, i, t, r FROM TestInMemory WHERE id = " + record.Item1.ToString(this.invClt) + " AND i = " + record.Item2.ToString(this.invClt)
+                        + " AND t = '" + record.Item3 + "' AND r = " + record.Item4.ToString(this.invClt) + ";";
+
+                    using (var statement = connection.Prepare(command))
+                    {
+                        while (statement.Step() == SQLiteResult.ROW)
+                        {
+                            var id = (long)statement[0];
+                            var i = (long)statement[1];
+                            var t = (string)statement[2];
+                            var r = (double)statement[3];
+
+                            queriedRecords.Add(new Tuple<int, long, string, double>((int)id, i, t, r));
+                        }
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestInMemory;"))
+                {
+                    statement.Step();
+                }
+            }
+
+            Assert.AreEqual(insertedRecords.Count, queriedRecords.Count);
+
+            insertedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+            queriedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+
+            for (var i = 0; i < insertedRecords.Count; i++)
+            {
+                var insertedRecord = insertedRecords[i];
+                var queriedRecord = queriedRecords[i];
+
+                Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
+                Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
+                Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) <= Math.Abs(insertedRecord.Item4 * 0.0000001));
+            }
+        }
+
+        [TestMethod]
+        public void TestTemporaryDB()
+        {
+            var numRecords = this.rnd.Next(1, 11);
+
+            var insertedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+            var queriedRecords = new List<Tuple<int, long, string, double>>(numRecords);
+
+            for (var i = 0; i < numRecords; i++)
+            {
+                insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
+            }
+
+            using (var connection = new SQLiteConnection(""))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestTemporaryDB;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestTemporaryDB(id INTEGER, i INTEGER, t TEXT, r REAL);"))
+                {
+                    statement.Step();
+                }
+
+                foreach (var record in insertedRecords)
+                {
+                    var command = "INSERT INTO TestTemporaryDB(id, i, t, r) VALUES(" + record.Item1.ToString(this.invClt) + "," + record.Item2.ToString(this.invClt)
+                        + ",'" + record.Item3 + "'," + record.Item4.ToString(this.invClt) + ");";
+
+                    using (var statement = connection.Prepare(command))
+                    {
+                        statement.Step();
+                    }
+                }
+
+                foreach (var record in insertedRecords)
+                {
+                    var command = "SELECT id, i, t, r FROM TestTemporaryDB WHERE id = " + record.Item1.ToString(this.invClt) + " AND i = " + record.Item2.ToString(this.invClt)
+                        + " AND t = '" + record.Item3 + "' AND r = " + record.Item4.ToString(this.invClt) + ";";
+
+                    using (var statement = connection.Prepare(command))
+                    {
+                        while (statement.Step() == SQLiteResult.ROW)
+                        {
+                            var id = (long)statement[0];
+                            var i = (long)statement[1];
+                            var t = (string)statement[2];
+                            var r = (double)statement[3];
+
+                            queriedRecords.Add(new Tuple<int, long, string, double>((int)id, i, t, r));
+                        }
+                    }
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestTemporaryDB;"))
+                {
+                    statement.Step();
+                }
+            }
+
+            Assert.AreEqual(insertedRecords.Count, queriedRecords.Count);
+
+            insertedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+            queriedRecords.Sort((x, y) => { return x.Item1 - y.Item1; });
+
+            for (var i = 0; i < insertedRecords.Count; i++)
+            {
+                var insertedRecord = insertedRecords[i];
+                var queriedRecord = queriedRecords[i];
+
+                Assert.AreEqual(insertedRecord.Item1, queriedRecord.Item1);
+                Assert.AreEqual(insertedRecord.Item2, queriedRecord.Item2);
+                Assert.AreEqual(insertedRecord.Item3, queriedRecord.Item3);
+                Assert.IsTrue(Math.Abs(insertedRecord.Item4 - queriedRecord.Item4) <= Math.Abs(insertedRecord.Item4 * 0.0000001));
+            }
+        }
+
+        [TestMethod]
         public void TestColumnName()
         {
             using (var connection = new SQLiteConnection(this.databaseRelativePath))
@@ -844,11 +1000,21 @@ namespace SQLitePCL.Ext.WindowsStore.Test
                 Assert.AreEqual(insertedRecord.Item7, queriedRecord.Item7);
                 Assert.AreEqual(insertedRecord.Rest.Item1, queriedRecord.Rest.Item1);
                 Assert.AreEqual(insertedRecord.Rest.Item2, queriedRecord.Rest.Item2);
-                Assert.AreEqual(insertedRecord.Rest.Item3, queriedRecord.Rest.Item3);
-                Assert.AreEqual(insertedRecord.Rest.Item4, queriedRecord.Rest.Item4);
-                Assert.IsTrue(Math.Abs(insertedRecord.Rest.Item5 - queriedRecord.Rest.Item5) <= Math.Abs(insertedRecord.Rest.Item5 * 0.0000001m));
-                Assert.IsTrue(Math.Abs(insertedRecord.Rest.Item6 - queriedRecord.Rest.Item6) <= Math.Abs(insertedRecord.Rest.Item6 * 0.0000001f));
-                Assert.IsTrue(Math.Abs(insertedRecord.Rest.Item7 - queriedRecord.Rest.Item7) <= Math.Abs(insertedRecord.Rest.Item7 * 0.0000001d));
+                Assert.IsTrue(insertedRecord.Rest.Item3 == queriedRecord.Rest.Item3,
+                    "Expected: {0}. Actual {1}.",
+                    insertedRecord.Rest.Item3,
+                    queriedRecord.Rest.Item3);
+                Assert.IsTrue(insertedRecord.Rest.Item4 == queriedRecord.Rest.Item4,
+                    "Expected: {0}. Actual {1}.",
+                    insertedRecord.Rest.Item4,
+                    queriedRecord.Rest.Item4);
+                Assert.IsTrue(Math.Abs(insertedRecord.Rest.Item5 - queriedRecord.Rest.Item5) <= Math.Max(Math.Abs(insertedRecord.Rest.Item5), Math.Abs(queriedRecord.Rest.Item5)) * 0.0000001m,
+                    "Expected: {0}. Actual: {1}. Delta: {2}.",
+                    insertedRecord.Rest.Item5,
+                    queriedRecord.Rest.Item5,
+                    Math.Max(Math.Abs(insertedRecord.Rest.Item5), Math.Abs(queriedRecord.Rest.Item5)) * 0.0000001m);
+                Assert.AreEqual(insertedRecord.Rest.Item6, queriedRecord.Rest.Item6, Math.Max(Math.Abs(insertedRecord.Rest.Item6), Math.Abs(queriedRecord.Rest.Item6)) * 0.0000001f);
+                Assert.AreEqual(insertedRecord.Rest.Item7, queriedRecord.Rest.Item7, Math.Max(Math.Abs(insertedRecord.Rest.Item7), Math.Abs(queriedRecord.Rest.Item7)) * 0.0000001d);
             }
         }
 
