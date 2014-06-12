@@ -37,12 +37,31 @@ namespace SQLitePCL
         private IDictionary<Guid, IDictionary<string, object>> aggregateContextDataDic = new Dictionary<Guid, IDictionary<string, object>>();
 
         public SQLiteConnection(string fileName)
+            : this(fileName, true)
+        {
+        }
+
+        private SQLiteConnection(string fileName, bool setTemporaryDirectory)
         {
             this.platformMarshal = Platform.Instance.PlatformMarshal;
             this.platformStorage = Platform.Instance.PlatformStorage;
             this.sqlite3Provider = Platform.Instance.SQLite3Provider;
 
-            var localFilePath = this.platformStorage.GetLocalFilePath(fileName);
+            if (setTemporaryDirectory)
+            {
+                this.SetTemporaryDirectory();
+            }
+
+            var localFilePath = string.Empty;
+
+            if (fileName.Trim().ToLowerInvariant() == ":memory:")
+            {
+                localFilePath = ":memory:";
+            }
+            else if (fileName.Trim() != string.Empty)
+            {
+                localFilePath = this.platformStorage.GetLocalFilePath(fileName);
+            }
 
             var fileNamePtr = this.platformMarshal.MarshalStringManagedToNativeUTF8(localFilePath);
 
@@ -63,8 +82,6 @@ namespace SQLitePCL
 
                     throw new SQLiteException("Unable to open the database file: " + fileName);
                 }
-
-                this.SetTemporaryDirectory();
             }
             catch (SQLiteException)
             {
@@ -437,24 +454,31 @@ namespace SQLitePCL
             {
                 if (!SQLiteConnection.temporaryDirectorySet)
                 {
-                    var temporaryDirectoryPath = this.platformStorage.GetTemporaryDirectoryPath();
-
-                    using (var statement = this.Prepare(string.Format("PRAGMA temp_store_directory = '{0}';", temporaryDirectoryPath)))
+                    try
                     {
-                        var result = statement.Step();
-                        if (result != SQLiteResult.DONE)
+                        using (var connection = new SQLiteConnection(":memory:", false))
                         {
-                            var errmsgPtr = this.sqlite3Provider.Sqlite3Errmsg(this.db);
+                            var temporaryDirectoryPath = this.platformStorage.GetTemporaryDirectoryPath();
 
-                            var errmsg = this.platformMarshal.MarshalStringNativeUTF8ToManaged(errmsgPtr);
+                            using (var statement = connection.Prepare(string.Format("PRAGMA temp_store_directory = '{0}';", temporaryDirectoryPath)))
+                            {
+                                var result = statement.Step();
 
-                            this.sqlite3Provider.Sqlite3CloseV2(this.db);
+                                if (result != SQLiteResult.DONE)
+                                {
+                                    var errmsg = connection.ErrorMessage();
 
-                            throw new SQLiteException("Unable to set temporary directory: " + temporaryDirectoryPath + " Result: " + result.ToString() + " Details: " + errmsg);
+                                    throw new SQLiteException("Unable to set temporary directory: " + temporaryDirectoryPath + " Result: " + result.ToString() + " Details: " + errmsg);
+                                }
+                            }
                         }
-                    }
 
-                    SQLiteConnection.temporaryDirectorySet = true;
+                        SQLiteConnection.temporaryDirectorySet = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new SQLiteException("Unable to set temporary directory.", ex);
+                    }
                 }
             }
         }
