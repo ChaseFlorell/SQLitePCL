@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>SQLitePCL.Ext.IOS.Test</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <AssemblyName>SQLitePCLExtIOSTest</AssemblyName>
+    <AssemblyName>SQLitePCLExtiOSTest</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
     <DebugSymbols>true</DebugSymbols>
