@@ -281,7 +281,7 @@ namespace NGP.Test.WindowsStore
                 insertedRecords.Add(new Tuple<int, long, string, double>(i, this.GetRandomInteger(), this.GetRandomString(), this.GetRandomReal()));
             }
 
-            using (var connection = new SQLiteConnection(""))
+            using (var connection = new SQLiteConnection(string.Empty))
             {
                 using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestTemporaryDB;"))
                 {
@@ -1001,15 +1001,18 @@ namespace NGP.Test.WindowsStore
                 Assert.AreEqual(insertedRecord.Item7, queriedRecord.Item7);
                 Assert.AreEqual(insertedRecord.Rest.Item1, queriedRecord.Rest.Item1);
                 Assert.AreEqual(insertedRecord.Rest.Item2, queriedRecord.Rest.Item2);
-                Assert.IsTrue(insertedRecord.Rest.Item3 == queriedRecord.Rest.Item3,
+                Assert.IsTrue(
+                    insertedRecord.Rest.Item3 == queriedRecord.Rest.Item3,
                     "Expected: {0}. Actual {1}.",
                     insertedRecord.Rest.Item3,
                     queriedRecord.Rest.Item3);
-                Assert.IsTrue(insertedRecord.Rest.Item4 == queriedRecord.Rest.Item4,
+                Assert.IsTrue(
+                    insertedRecord.Rest.Item4 == queriedRecord.Rest.Item4,
                     "Expected: {0}. Actual {1}.",
                     insertedRecord.Rest.Item4,
                     queriedRecord.Rest.Item4);
-                Assert.IsTrue(Math.Abs(insertedRecord.Rest.Item5 - queriedRecord.Rest.Item5) <= Math.Max(Math.Abs(insertedRecord.Rest.Item5), Math.Abs(queriedRecord.Rest.Item5)) * 0.0000001m,
+                Assert.IsTrue(
+                    Math.Abs(insertedRecord.Rest.Item5 - queriedRecord.Rest.Item5) <= Math.Max(Math.Abs(insertedRecord.Rest.Item5), Math.Abs(queriedRecord.Rest.Item5)) * 0.0000001m,
                     "Expected: {0}. Actual: {1}. Delta: {2}.",
                     insertedRecord.Rest.Item5,
                     queriedRecord.Rest.Item5,
