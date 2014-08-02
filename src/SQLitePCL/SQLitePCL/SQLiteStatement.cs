@@ -106,9 +106,18 @@ namespace SQLitePCL
                         break;
                     case SQLiteType.BLOB:
                         var blobPointer = this.sqlite3Provider.Sqlite3ColumnBlob(this.stm, index);
-                        var length = this.sqlite3Provider.Sqlite3ColumnBytes(this.stm, index);
-                        result = new byte[length];
-                        this.platformMarshal.Copy(blobPointer, (byte[])result, 0, length);
+
+                        if (blobPointer != IntPtr.Zero)
+                        {
+                            var length = this.sqlite3Provider.Sqlite3ColumnBytes(this.stm, index);
+                            result = new byte[length];
+                            this.platformMarshal.Copy(blobPointer, (byte[])result, 0, length);
+                        }
+                        else
+                        {
+                            result = new byte[0];
+                        }
+
                         break;
                     case SQLiteType.NULL:
                         break;
