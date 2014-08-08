@@ -33,6 +33,7 @@ namespace NGP.Test.Android
 			global::Xamarin.Android.NUnitLite.Resource.Id.ResultFullName = global::NGP.Test.Android.Resource.Id.ResultFullName;
 			global::Xamarin.Android.NUnitLite.Resource.Id.ResultMessage = global::NGP.Test.Android.Resource.Id.ResultMessage;
 			global::Xamarin.Android.NUnitLite.Resource.Id.ResultResultState = global::NGP.Test.Android.Resource.Id.ResultResultState;
+			global::Xamarin.Android.NUnitLite.Resource.Id.ResultRunSingleMethodTest = global::NGP.Test.Android.Resource.Id.ResultRunSingleMethodTest;
 			global::Xamarin.Android.NUnitLite.Resource.Id.ResultStackTrace = global::NGP.Test.Android.Resource.Id.ResultStackTrace;
 			global::Xamarin.Android.NUnitLite.Resource.Id.ResultsFailed = global::NGP.Test.Android.Resource.Id.ResultsFailed;
 			global::Xamarin.Android.NUnitLite.Resource.Id.ResultsId = global::NGP.Test.Android.Resource.Id.ResultsId;
@@ -96,20 +97,23 @@ namespace NGP.Test.Android
 			// aapt resource value: 0x7f060001
 			public const int OptionRemoteServer = 2131099649;
 			
-			// aapt resource value: 0x7f060010
-			public const int OptionsButton = 2131099664;
-			
-			// aapt resource value: 0x7f06000b
-			public const int ResultFullName = 2131099659;
-			
-			// aapt resource value: 0x7f06000d
-			public const int ResultMessage = 2131099661;
+			// aapt resource value: 0x7f060011
+			public const int OptionsButton = 2131099665;
 			
 			// aapt resource value: 0x7f06000c
-			public const int ResultResultState = 2131099660;
+			public const int ResultFullName = 2131099660;
 			
 			// aapt resource value: 0x7f06000e
-			public const int ResultStackTrace = 2131099662;
+			public const int ResultMessage = 2131099662;
+			
+			// aapt resource value: 0x7f06000d
+			public const int ResultResultState = 2131099661;
+			
+			// aapt resource value: 0x7f06000b
+			public const int ResultRunSingleMethodTest = 2131099659;
+			
+			// aapt resource value: 0x7f06000f
+			public const int ResultStackTrace = 2131099663;
 			
 			// aapt resource value: 0x7f060007
 			public const int ResultsFailed = 2131099655;
@@ -132,11 +136,11 @@ namespace NGP.Test.Android
 			// aapt resource value: 0x7f060005
 			public const int ResultsResult = 2131099653;
 			
-			// aapt resource value: 0x7f06000f
-			public const int RunTestsButton = 2131099663;
+			// aapt resource value: 0x7f060010
+			public const int RunTestsButton = 2131099664;
 			
-			// aapt resource value: 0x7f060011
-			public const int TestSuiteListView = 2131099665;
+			// aapt resource value: 0x7f060012
+			public const int TestSuiteListView = 2131099666;
 			
 			static Id()
 			{
