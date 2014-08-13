@@ -1279,6 +1279,48 @@ namespace NGP.Test.WindowsStore
             }
         }
 
+        [TestMethod]
+        public void TestEmptyBlob()
+        {
+            using (var connection = new SQLiteConnection(this.databaseRelativePath))
+            {
+                using (var statement = connection.Prepare("DROP TABLE IF EXISTS TestEmptyBlob;"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("CREATE TABLE TestEmptyBlob(b BLOB);"))
+                {
+                    statement.Step();
+                }
+
+                using (var statement = connection.Prepare("INSERT INTO TestEmptyBlob(b) VALUES(@b);"))
+                {
+                    statement.Bind("@b", this.GetRandomBlob(0));
+
+                    statement.Step();
+
+                    statement.Reset();
+                    statement.ClearBindings();
+                }
+
+                using (var statement = connection.Prepare("SELECT b FROM TestEmptyBlob;"))
+                {
+                    statement.Step();
+
+                    var emptyBlobValue = statement.GetBlob(0);
+
+                    Assert.IsNotNull(emptyBlobValue);
+                    Assert.AreEqual(0, emptyBlobValue.Length);
+                }
+
+                using (var statement = connection.Prepare("DROP TABLE TestEmptyBlob;"))
+                {
+                    statement.Step();
+                }
+            }
+        }
+
         private static object StaticFunction(object[] arguments)
         {
             return (long)arguments[0] + (long)arguments[1];
